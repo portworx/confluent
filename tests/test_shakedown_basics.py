@@ -108,7 +108,6 @@ def test_pods_replace():
 
 # --------- Topics -------------
 
-
 @pytest.mark.smoke
 @pytest.mark.sanity
 def test_topic_create():
@@ -119,10 +118,10 @@ def test_topic_create():
     assert ('Created topic "%s".\n' % EPHEMERAL_TOPIC_NAME in create_info['message'])
     assert ("topics with a period ('.') or underscore ('_') could collide." in create_info['message'])
     topic_list_info = service_cli('topic list')
-    assert topic_list_info == [EPHEMERAL_TOPIC_NAME]
+    assert EPHEMERAL_TOPIC_NAME in topic_list_info
 
     topic_info = service_cli('topic describe {}'.format(EPHEMERAL_TOPIC_NAME))
-    assert len(topic_info) == 1
+    assert len(topic_info) >= 1
     assert len(topic_info['partitions']) == DEFAULT_PARTITION_COUNT
 
 
