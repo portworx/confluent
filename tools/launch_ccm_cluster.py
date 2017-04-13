@@ -203,10 +203,10 @@ class CCMLauncher(object):
 
     def _start(self, config):
         is_17_cluster = config.ccm_channel in self._DCOS_17_CHANNELS
-        confluent-kafka_url = None
+        confluent_kafka_url = None
         if is_17_cluster:
             hostrepo = 's3.amazonaws.com/downloads.mesosphere.io/dcos'
-        elif config.cf_confluent-kafka.startswith('ee.'):
+        elif config.cf_confluent_kafka.startswith('ee.'):
             hostrepo = 's3.amazonaws.com/downloads.mesosphere.io/dcos-enterprise-aws-advanced'
             # format is different for enterprise security modes.
             mode = config.security_mode
@@ -215,21 +215,21 @@ class CCMLauncher(object):
                         "default security (none). Cowardly bringing "
                         "up a permissive cluster")
                 mode = 'permissive'
-            confluent-kafka_url = 'https://{}/{}/{}/cloudformation/{}'.format(
-                hostrepo, config.ccm_channel, mode, config.cf_confluent-kafka)
+            confluent_kafka_url = 'https://{}/{}/{}/cloudformation/{}'.format(
+                hostrepo, config.ccm_channel, mode, config.cf_confluent_kafka)
         else:
             hostrepo = 's3-us-west-2.amazonaws.com/downloads.dcos.io/dcos'
         # non-ee mode
-        if not confluent-kafka_url:
-            confluent-kafka_url = 'https://{}/{}/cloudformation/{}'.format(
-                hostrepo, config.ccm_channel, config.cf_confluent-kafka)
-        # external override from DCOS_CONFLUENT-KAFKA_URL
-        if config.confluent-kafka_url:
-            confluent-kafka_url = config.confluent-kafka_url
-            logger.info("Accepting externally provided confluent-kafka_url from environment.")
+        if not confluent_kafka_url:
+            confluent_kafka_url = 'https://{}/{}/cloudformation/{}'.format(
+                hostrepo, config.ccm_channel, config.cf_confluent_kafka)
+        # external override from DCOS_CONFLUENT_KAFKA_URL
+        if config.confluent_kafka_url:
+            confluent_kafka_url = config.confluent_kafka_url
+            logger.info("Accepting externally provided confluent_kafka_url from environment.")
         cluster_name = config.name_prefix + self._rand_str(8)
         payload = {
-            'confluent-kafka_url': confluent-kafka_url,
+            'confluent_kafka_url': confluent_kafka_url,
             'name': cluster_name,
             'cluster_desc': config.description,
             'time': config.duration_mins,
@@ -247,16 +247,16 @@ class CCMLauncher(object):
   mountvols={}
   permissions={}
   channel={}
-  confluent-kafka={}
-  confluent-kafka_url={}'''.format(
+  confluent_kafka={}
+  confluent_kafka_url={}'''.format(
       cluster_name,
       config.private_agents, config.public_agents,
       config.duration_mins,
       config.mount_volumes,
       config.security_mode,
       config.ccm_channel,
-      config.cf_confluent-kafka,
-      confluent-kafka_url))
+      config.cf_confluent_kafka,
+      confluent_kafka_url))
         response = self._query_http('POST', self._CCM_PATH, request_json_payload=payload)
         if not response:
             raise ClusterActionException('CCM cluster creation request failed')
@@ -288,7 +288,7 @@ class CCMLauncher(object):
         dcos_url = 'https://' + dns_address
         auth_token = dcos_login.DCOSLogin(dcos_url).get_acs_token()
 
-        is_enterprise = config.cf_confluent-kafka.startswith('ee.')
+        is_enterprise = config.cf_confluent_kafka.startswith('ee.')
         clustinit = configure_test_cluster.ClusterInitializer(cluster_id,
                 stack_id, auth_token, dns_address, is_enterprise,
                 config.security_mode)
@@ -338,7 +338,7 @@ class StartConfig(object):
             description = '',
             duration_mins = 240,
             ccm_channel = 'testing/master',
-            cf_confluent-kafka = 'ee.single-master.cloudformation.json',
+            cf_confluent_kafka = 'ee.single-master.cloudformation.json',
             start_timeout_mins = CCMLauncher.DEFAULT_TIMEOUT_MINS,
             public_agents = 0,
             private_agents = 1,
@@ -349,7 +349,7 @@ class StartConfig(object):
         self.name_prefix = name_prefix
         self.duration_mins = int(os.environ.get('CCM_DURATION_MINS', duration_mins))
         self.ccm_channel = os.environ.get('CCM_CHANNEL', ccm_channel)
-        self.cf_confluent-kafka = os.environ.get('CCM_CONFLUENT-KAFKA', cf_confluent-kafka)
+        self.cf_confluent_kafka = os.environ.get('CCM_CONFLUENT_KAFKA', cf_confluent_kafka)
         self.start_timeout_mins = int(os.environ.get('CCM_TIMEOUT_MINS', start_timeout_mins))
         self.public_agents = int(os.environ.get('CCM_PUBLIC_AGENTS', public_agents))
         self.private_agents = int(os.environ.get('CCM_AGENTS', private_agents))
@@ -363,7 +363,7 @@ class StartConfig(object):
         if not self.security_mode in ('strict', 'permissive', None):
             raise Exception("Unknown value for SECURITY: %s" %
                     self.security_mode)
-        self.confluent-kafka_url = os.environ.get('DCOS_CONFLUENT-KAFKA_URL', None)
+        self.confluent_kafka_url = os.environ.get('DCOS_CONFLUENT_KAFKA_URL', None)
         if not description:
             description = 'A test cluster with {} private/{} public agents'.format(
                 self.private_agents, self.public_agents)

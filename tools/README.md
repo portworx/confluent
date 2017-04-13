@@ -111,7 +111,7 @@ For some examples of this, take a look at `resource.json` for [Kafka](https://gi
 
 You may include custom placeholders of the form `{{custom-placeholder}}` anywhere in your confluent-kafka. This can be useful for e.g. passing the path to a per-build docker tag, a randomly generated key, or anything else that you expect to change on a per-build basis.
 
-These parameters can then be filled in by passing a `CONFLUENT-KAFKA_CUSTOM_PLACEHOLDER` environment variable with the desired value when calling `publish_aws.py` or `publish_http.py`. You can learn more about this feature in the documentation for `publish_aws.py` and `publish_http.py`, below.
+These parameters can then be filled in by passing a `CONFLUENT_KAFKA_CUSTOM_PLACEHOLDER` environment variable with the desired value when calling `publish_aws.py` or `publish_http.py`. You can learn more about this feature in the documentation for `publish_aws.py` and `publish_http.py`, below.
 
 ### Build script and artifacts
 
@@ -200,7 +200,7 @@ Optional:
 - `AWS_UPLOAD_REGION`: manual region to use for the S3 upload
 - `WORKSPACE`: Set by Jenkins, used to determine if a `$WORKSPACE/stub-universe.properties` file should be created with `STUB_UNIVERSE_URL` and `STUB_UNIVERSE_S3_DIR` values.
 - `CUSTOM_UNIVERSES_PATH`: Text file to write the stub universe URL into
-- `CONFLUENT-KAFKA_<SOME_PARAM>`: Inherited by `universe_builder.py`, see below.
+- `CONFLUENT_KAFKA_<SOME_PARAM>`: Inherited by `universe_builder.py`, see below.
 - `DRY_RUN`: Refrain from actually uploading anything to S3.
 
 ### publish_http.py
@@ -254,7 +254,7 @@ Optional:
 - `HTTP_HOST` (default: `172.17.0.1`, the IP used in dcos-docker): Host endpoint to be used by HTTP daemon.
 - `HTTP_PORT` (default: `0` for an ephemeral port): Port to be used by HTTP daemon.
 - `WORKSPACE`: Set by Jenkins, used to determine if a `$WORKSPACE/stub-universe.properties` file should be created with `STUB_UNIVERSE_URL` and `STUB_UNIVERSE_S3_DIR` values.
-- `CONFLUENT-KAFKA_<SOME_PARAM>`: Inherited by `universe_builder.py`, see below.
+- `CONFLUENT_KAFKA_<SOME_PARAM>`: Inherited by `universe_builder.py`, see below.
 
 ### release_builder.py
 
@@ -362,7 +362,7 @@ Startup-specific options:
 
 - `CCM_DURATION_MINS`: Number of minutes that the cluster should run (default: `60`)
 - `CCM_CHANNEL`: Development channel to use (default: `testing/master`)
-- `CCM_CONFLUENT-KAFKA`: AWS Cloudformation confluent-kafka to use in the above channel (default `ee.single-master.cloudformation.json`)
+- `CCM_CONFLUENT_KAFKA`: AWS Cloudformation confluent-kafka to use in the above channel (default `ee.single-master.cloudformation.json`)
 - `CCM_PUBLIC_AGENTS`: Number of public agents to start (default: `0`)
 - `CCM_AGENTS`: Number of private agents to start (default: `1`)
 - `CCM_AWS_REGION`: Region to start an AWS cluster in (default `us-west-2`)
@@ -507,7 +507,7 @@ The provided universe files may contain confluent-kafka parameters of the form `
 - `{{artifact-dir}}`: Where the artifacts are being uploaded to. Filled with the provided `artifact-dir` argument
 - `{{sha256:somefile.txt}}`: Automatically populated with the sha256sum value of `somefile.txt`. The paths to these files must be provided as arguments when invoking the builder.
 
-In addition to these default confluent-kafka parameters, the caller may also provide environment variables of the form `CONFLUENT-KAFKA_SOME_PARAM` whose value will automatically be inserted into confluent-kafka fields named `{{some-param}}`. For example, running `CONFLUENT-KAFKA_DOCKER_IMAGE=mesosphere/docker-image ./universe_builder.py` would result in any `{{docker-image}}` parameters being replaced with `mesosphere/docker-image`.
+In addition to these default confluent-kafka parameters, the caller may also provide environment variables of the form `CONFLUENT_KAFKA_SOME_PARAM` whose value will automatically be inserted into confluent-kafka fields named `{{some-param}}`. For example, running `CONFLUENT_KAFKA_DOCKER_IMAGE=mesosphere/docker-image ./universe_builder.py` would result in any `{{docker-image}}` parameters being replaced with `mesosphere/docker-image`.
 
 A universe confluent-kafka is effectively a directory with the JSON files that you want to include in your Universe package, with confluent-kafka paramters provided in the above format. For some real-world examples of universe confluent-kafkas, take a look at [Kafka's](https://github.com/mesosphere/dcos-kafka-service/tree/master/universe/) or [Cassandra's](https://github.com/mesosphere/dcos-cassandra-service/tree/master/universe/) confluent-kafkas.
 
@@ -525,7 +525,7 @@ $ ./universe_builder.py \
 Example:
 
 ```
-$ CONFLUENT-KAFKA_SOME_CUSTOM_STRING="this text replaces any instances of {{some-custom-string}}" \
+$ CONFLUENT_KAFKA_SOME_CUSTOM_STRING="this text replaces any instances of {{some-custom-string}}" \
 ./universe_builder.py \
     kafka \
     1.2.3-4.5.6 \
@@ -538,7 +538,7 @@ $ CONFLUENT-KAFKA_SOME_CUSTOM_STRING="this text replaces any instances of {{some
 
 #### Environment variables
 
-As described above, any `CONFLUENT-KAFKA_<SOME_PARAM>` values will automatically be inserted into confluent-kafka slots named `{{some-param}}`. No other environment variables are needed.
+As described above, any `CONFLUENT_KAFKA_<SOME_PARAM>` values will automatically be inserted into confluent-kafka slots named `{{some-param}}`. No other environment variables are needed.
 
 #### Enable Mount Volumes Script
 ```bash
