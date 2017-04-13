@@ -1,6 +1,6 @@
 <p align="left"><img src="https://mesosphere.com/wp-content/themes/mesosphere/library/images/assets/dcos-sdk-logo.png" width="250"/></p>
 
-# Your Name Here
+# Confluent Kafka
 
 This confluent-kafka README may be used as a starting point for writing a Service Guide for your DC/OS Service.
 
@@ -10,7 +10,7 @@ Many sections are left unfilled as they depend on how your service works. For ex
 
 ---
 
-# _SERVICENAME_ Service Guide
+# Confluent Kafka Service Guide
 
 ## Table of Contents
 
