@@ -5,14 +5,14 @@ import sdk_utils as utils
 
 from tests.config import (
     PACKAGE_NAME,
-    DEFAULT_TASK_COUNT
+    DEFAULT_BROKER_COUNT
 )
 
 
 def setup_module(module):
     install.uninstall(PACKAGE_NAME)
     utils.gc_frameworks()
-    install.install(PACKAGE_NAME, DEFAULT_TASK_COUNT)
+    install.install(PACKAGE_NAME, DEFAULT_BROKER_COUNT)
 
 
 def teardown_module(module):
