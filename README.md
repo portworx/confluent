@@ -68,11 +68,11 @@ Many sections are left unfilled as they depend on how your service works. For ex
 <a name="overview"></a>
 # Overview
 
-DC/OS _SERVICENAME_ is an automated service that makes it easy to deploy and manage _SERVICENAME_ on [Mesosphere DC/OS](http://dcos.io). For more information on _SERVICENAME_, see its _[documentation](http://example.com)_.
+DC/OS Confluent Kafka is an automated service that makes it easy to deploy and manage Confluent Kafka on [Mesosphere DC/OS](http://dcos.io). For more information on _SERVICENAME_, see its _[documentation](http://example.com)_.
 
 The service comes with a reasonable initial configuration for evaluation use. Additional customizations may be made to the service configuration at initial install, and later updated once the service is already running through a configuration rollout process. If you just want to try out the service, you can use the default configuration and be up and running within moments.
 
-Interoperating clients and services may take advantage of DC/OS service discovery features to directly access _SERVICENAME_ via advertised endpoints, regardless of where the instance is currently located within a DC/OS Cluster.
+Interoperating clients and services may take advantage of DC/OS service discovery features to directly access Confluent Kafka via advertised endpoints, regardless of where the instance is currently located within a DC/OS Cluster.
 
 Multiple instances can be installed on DC/OS and managed independently. This allows different teams within an organization to have isolated instances of the service.
 
