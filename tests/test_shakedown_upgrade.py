@@ -28,6 +28,7 @@ def teardown_module(module):
     install.uninstall(SERVICE_NAME)
 
 
+@pytest.mark.skip(reason="https://github.com/mesosphere/confluent/issues/2")
 @pytest.mark.sanity
 @pytest.mark.smoke
 def test_upgrade():

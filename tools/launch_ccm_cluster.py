@@ -211,7 +211,7 @@ class CCMLauncher(object):
             # format is different for enterprise security modes.
             mode = config.security_mode
             if not mode:
-                logger.warning("No confluent-kafkas known for enterprise & "
+                logger.warning("No confluent_kafkas known for enterprise & "
                         "default security (none). Cowardly bringing "
                         "up a permissive cluster")
                 mode = 'permissive'
@@ -229,7 +229,7 @@ class CCMLauncher(object):
             logger.info("Accepting externally provided confluent_kafka_url from environment.")
         cluster_name = config.name_prefix + self._rand_str(8)
         payload = {
-            'confluent_kafka_url': confluent_kafka_url,
+            'template_url': confluent_kafka_url,
             'name': cluster_name,
             'cluster_desc': config.description,
             'time': config.duration_mins,
@@ -334,7 +334,7 @@ class StartConfig(object):
 
     def __init__(
             self,
-            name_prefix = 'infinity-test-',
+            name_prefix = 'infinity-confluent-test-',
             description = '',
             duration_mins = 240,
             ccm_channel = 'testing/master',
@@ -342,7 +342,7 @@ class StartConfig(object):
             start_timeout_mins = CCMLauncher.DEFAULT_TIMEOUT_MINS,
             public_agents = 0,
             private_agents = 1,
-            aws_region = 'eu-central-1',
+            aws_region = 'us-west-2',
             admin_location = '0.0.0.0/0',
             cloud_provider = '0', # https://mesosphere.atlassian.net/browse/TEST-231
             mount_volumes = False):
