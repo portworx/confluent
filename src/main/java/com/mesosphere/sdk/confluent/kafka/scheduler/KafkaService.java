@@ -5,13 +5,14 @@ import com.mesosphere.sdk.confluent.kafka.scheduler.api.BrokerResource;
 import com.mesosphere.sdk.confluent.kafka.scheduler.api.KafkaZKClient;
 import com.mesosphere.sdk.confluent.kafka.scheduler.api.TopicResource;
 import com.mesosphere.sdk.confluent.kafka.scheduler.cmd.CmdExecutor;
+import com.mesosphere.sdk.confluent.kafka.scheduler.upgrade.CuratorStateStoreFilter;
+import com.mesosphere.sdk.confluent.kafka.scheduler.upgrade.KafkaConfigUpgrade;
 import com.mesosphere.sdk.dcos.DcosConstants;
+import com.mesosphere.sdk.offer.evaluate.placement.RegexMatcher;
 import com.mesosphere.sdk.scheduler.DefaultScheduler;
 import com.mesosphere.sdk.specification.DefaultService;
 import com.mesosphere.sdk.specification.yaml.RawServiceSpec;
 import com.mesosphere.sdk.specification.yaml.YAMLServiceSpecFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,13 +22,19 @@ import java.util.Collection;
  * Kafka Service.
  */
 public class KafkaService extends DefaultService {
-    protected static final Logger LOGGER = LoggerFactory.getLogger(KafkaService.class);
-
     public KafkaService(File pathToYamlSpecification) throws Exception {
         RawServiceSpec rawServiceSpec = YAMLServiceSpecFactory.generateRawSpecFromYAML(pathToYamlSpecification);
         DefaultScheduler.Builder schedulerBuilder =
                 DefaultScheduler.newBuilder(YAMLServiceSpecFactory.generateServiceSpec(rawServiceSpec));
         schedulerBuilder.setPlansFrom(rawServiceSpec);
+
+        /* Upgrade */
+        new KafkaConfigUpgrade(schedulerBuilder.getServiceSpec());
+        CuratorStateStoreFilter stateStore = new CuratorStateStoreFilter(schedulerBuilder.getServiceSpec().getName(),
+                DcosConstants.MESOS_MASTER_ZK_CONNECTION_STRING);
+        stateStore.setIgnoreFilter(RegexMatcher.create("broker-[0-9]*"));
+        schedulerBuilder.setStateStore(stateStore);
+        /* Upgrade */
 
         schedulerBuilder.setEndpointProducer("zookeeper", EndpointProducer.constant(
                 schedulerBuilder.getServiceSpec().getZookeeperConnection() +
