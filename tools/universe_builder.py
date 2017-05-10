@@ -15,8 +15,8 @@ import zipfile
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 
-jre_url = 'https://downloads.mesosphere.com/java/jre-8u121-linux-x64.tar.gz'
-jre_jce_unlimited_url = 'https://downloads.mesosphere.com/java/jre-8u112-linux-x64-jce-unlimited.tar.gz'
+jre_url = 'https://downloads.mesosphere.com/java/jre-8u131-linux-x64.tar.gz'
+jre_jce_unlimited_url = 'https://downloads.mesosphere.com/java/jre-8u131-linux-x64-jce-unlimited.tar.gz'
 libmesos_bundle_url = 'https://downloads.mesosphere.com/libmesos-bundle/libmesos-bundle-1.9.0-rc2-1.2.0-rc2-1.tar.gz'
 
 class UniversePackageBuilder(object):
