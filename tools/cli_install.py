@@ -107,10 +107,12 @@ def download_cli(dcos_url, write_dir):
     """Download the correct cli version for a given cluster url, placing it in
     a target directory and causing the target executable to update atomically"""
     url_confluent_kafka = 'https://downloads.dcos.io/binaries/cli/{}/x86-64/dcos-{}/{}'
-    cluster_version = get_cluster_version(dcos_url)
-    # we only care about the target release number
-    if '-' in cluster_version:
-        cluster_version, _ = cluster_version.split('-', 1) # "1.9-dev" -> 1.9
+    #cluster_version = get_cluster_version(dcos_url)
+    ## we only care about the target release number
+    #if '-' in cluster_version:
+    #    cluster_version, _ = cluster_version.split('-', 1) # "1.9-dev" -> 1.9
+    # XXX : Bugs in 1.10 / 0.5.0 cluster mean we don't want it right now.
+    cluster_version = "1.9"
     cli_url = url_confluent_kafka.format(get_download_platform(), cluster_version,
                                   get_cli_filename())
     # actually download to unique filename, then rename into place atomically.
