@@ -171,11 +171,17 @@
           "type":"string",
           "default":"anonymous"
         },
-        "confluent_metric_reporters":{
-          "title":"metric.reporters",
-          "description":"Enterprise java class to collect/report broker metrics",
+        "kafka_metrics_reporters":{
+          "title":"kafka.metrics.reporters",
+          "description":"Old style metrics reporter",
           "type":"string",
-          "default":"io.confluent.metrics.reporter.ConfluentMetricsReporter"
+          "default":"com.airbnb.kafka.kafka08.StatsdMetricsReporter"
+        },
+        "metric_reporters":{
+          "title":"metric.reporters",
+          "description":"Comma-separated class list of metric reporters",
+          "type":"string",
+          "default":"io.confluent.metrics.reporter.ConfluentMetricsReporter,com.airbnb.kafka.kafka09.StatsdMetricsReporter"
         },
         "confluent_metrics_reporter_topic":{
           "title":"confluent.metrics.reporter.topic",

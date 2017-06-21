@@ -124,6 +124,7 @@ external.kafka.statsd.tag.enabled=true
 external.kafka.statsd.metrics.exclude_regex=
 
 {{#KAFKA_ADVERTISE_HOST}}
+# TODO this is wrong when overlay network is enabled
     advertised.host.name={{LIBPROCESS_IP}}
 {{/KAFKA_ADVERTISE_HOST}}
 
@@ -232,7 +233,8 @@ unclean.leader.election.enable={{KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE}}
 zookeeper.session.timeout.ms={{KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS}}
 zookeeper.sync.time.ms={{KAFKA_ZOOKEEPER_SYNC_TIME_MS}}
 
-metric.reporters={{KAFKA_METRIC_REPORTERS}}
+kafka.metrics.reporters={{KAFKA_METRICS_REPORTERS}}
+metric.reporters={{METRIC_REPORTERS}}
 confluent.support.metrics.enable={{KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE}}
 confluent.support.customer.id={{KAFKA_CONFLUENT_SUPPORT_CUSTOMER_ID}}
 confluent.metrics.reporter.bootstrap.servers={{KAFKA_CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS}}

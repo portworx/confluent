@@ -11,8 +11,11 @@ def get_config(app_name):
         return sdk_cmd.request('get', api_url('apps/{}'.format(app_name)), retry=False)
 
     config = sdk_spin.time_wait_return(lambda: fn()).json()['app']
-    del config['uris']
-    del config['version']
+    if 'uris' in config:
+        del config['uris']
+
+    if 'version' in config:
+        del config['version']
 
     return config
 
