@@ -53,7 +53,7 @@ def test_upgrade():
     print('Found Universe version: {}'.format(universe_version))
 
     print('Installing Universe version: {}'.format(universe_version))
-    install.install(PACKAGE_NAME, DEFAULT_BROKER_COUNT)
+    install.install(PACKAGE_NAME, DEFAULT_BROKER_COUNT, additional_options= { "service": { "user": "root" } })
     print('Installation complete for Universe version: {}'.format(universe_version))
 
     tasks.check_running(SERVICE_NAME, DEFAULT_BROKER_COUNT)
@@ -68,7 +68,7 @@ def test_upgrade():
     print('Installing test version: {}'.format(test_version))
 
     # installation will return with old tasks because they are still running
-    install.install(PACKAGE_NAME, DEFAULT_BROKER_COUNT)
+    install.install(PACKAGE_NAME, DEFAULT_BROKER_COUNT, additional_options= { "service": { "user": "root" } })
     print('Installation complete for test version: {}'.format(test_version))
 
     # wait till tasks are restarted
