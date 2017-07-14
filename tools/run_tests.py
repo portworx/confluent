@@ -120,8 +120,7 @@ class CITester(object):
 requests==2.10.0
 dcos==0.4.16
 dcoscli==0.4.16
-
--e git+https://github.com/dcos/shakedown.git@master#egg=shakedown
+dcos-shakedown==1.4.2
 ''')
             requirements_file.flush()
             requirements_file.close()

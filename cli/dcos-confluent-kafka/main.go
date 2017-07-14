@@ -2,21 +2,19 @@ package main
 
 import (
 	"fmt"
-	"github.com/mesosphere/dcos-commons/cli"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"log"
 	"net/url"
 	"strconv"
+
+	"github.com/mesosphere/dcos-commons/cli"
+	"github.com/mesosphere/dcos-commons/cli/client"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func main() {
 	app := cli.New()
 
-	cli.HandleConfigSection(app)
-	cli.HandleEndpointsSection(app)
-	cli.HandlePlanSection(app)
-	cli.HandlePodsSection(app)
-	cli.HandleStateSection(app)
+	cli.HandleDefaultSections(app)
 
 	handleBrokerSection(app)
 	handleTopicSection(app)
@@ -24,16 +22,26 @@ func main() {
 	kingpin.MustParse(app.Parse(cli.GetArguments()))
 }
 
-
 type BrokerHandler struct {
 	broker string
 }
+
 func (cmd *BrokerHandler) runList(c *kingpin.ParseContext) error {
-	cli.PrintJSON(cli.HTTPGet("v1/brokers"))
+	responseBytes, err := client.HTTPServiceGet("v1/brokers")
+	if err != nil {
+		client.PrintMessageAndExit(err.Error())
+	} else {
+		client.PrintJSONBytes(responseBytes)
+	}
 	return nil
 }
 func (cmd *BrokerHandler) runView(c *kingpin.ParseContext) error {
-	cli.PrintJSON(cli.HTTPGet(fmt.Sprintf("v1/brokers/%s", cmd.broker)))
+	responseBytes, err := client.HTTPServiceGet(fmt.Sprintf("v1/brokers/%s", cmd.broker))
+	if err != nil {
+		client.PrintMessageAndExit(err.Error())
+	} else {
+		client.PrintJSONBytes(responseBytes)
+	}
 	return nil
 }
 
@@ -51,59 +59,99 @@ func handleBrokerSection(app *kingpin.Application) {
 	get.Arg("id", "id of broker").StringVar(&cmd.broker)
 }
 
-
 type TopicHandler struct {
-	topic string
-	createPartitions int
-	createReplication int
-	offsetsTime string
-	partitionCount int
+	topic               string
+	createPartitions    int
+	createReplication   int
+	offsetsTime         string
+	partitionCount      int
 	produceMessageCount int
 }
+
 func (cmd *TopicHandler) runList(c *kingpin.ParseContext) error {
-	cli.PrintJSON(cli.HTTPGet("v1/topics"))
+	responseBytes, err := client.HTTPServiceGet("v1/topics")
+	if err != nil {
+		client.PrintMessageAndExit(err.Error())
+	} else {
+		client.PrintJSONBytes(responseBytes)
+	}
 	return nil
 }
 func (cmd *TopicHandler) runDescribe(c *kingpin.ParseContext) error {
-	cli.PrintJSON(cli.HTTPGet(fmt.Sprintf("v1/topics/%s", cmd.topic)))
+	responseBytes, err := client.HTTPServiceGet(fmt.Sprintf("v1/topics/%s", cmd.topic))
+	if err != nil {
+		client.PrintMessageAndExit(err.Error())
+	} else {
+		client.PrintJSONBytes(responseBytes)
+	}
 	return nil
 }
 func (cmd *TopicHandler) runCreate(c *kingpin.ParseContext) error {
 	query := url.Values{}
 	query.Set("partitions", strconv.FormatInt(int64(cmd.createPartitions), 10))
 	query.Set("replication", strconv.FormatInt(int64(cmd.createReplication), 10))
-	cli.PrintJSON(cli.HTTPPutQuery(fmt.Sprintf("v1/topics/%s", cmd.topic), query.Encode()))
+	responseBytes, err := client.HTTPServicePutQuery(fmt.Sprintf("v1/topics/%s", cmd.topic), query.Encode())
+	if err != nil {
+		client.PrintMessageAndExit(err.Error())
+	} else {
+		client.PrintJSONBytes(responseBytes)
+	}
 	return nil
 }
 func (cmd *TopicHandler) runUnavailablePartitions(c *kingpin.ParseContext) error {
-	cli.PrintJSON(cli.HTTPGet("v1/topics/unavailable_partitions"))
+	responseBytes, err := client.HTTPServiceGet("v1/topics/unavailable_partitions")
+	if err != nil {
+		client.PrintMessage(err.Error())
+	} else {
+		client.PrintJSONBytes(responseBytes)
+	}
 	return nil
 }
 func (cmd *TopicHandler) runUnderReplicatedPartitions(c *kingpin.ParseContext) error {
-	cli.PrintJSON(cli.HTTPGet("v1/topics/under_replicated_partitions"))
+	responseBytes, err := client.HTTPServiceGet("v1/topics/under_replicated_partitions")
+	if err != nil {
+		client.PrintMessageAndExit(err.Error())
+	} else {
+		client.PrintJSONBytes(responseBytes)
+	}
 	return nil
 }
 func (cmd *TopicHandler) runPartitions(c *kingpin.ParseContext) error {
 	query := url.Values{}
 	query.Set("name", cmd.topic)
 	query.Set("partitions", strconv.FormatInt(int64(cmd.partitionCount), 10))
-	cli.PrintJSON(cli.HTTPPutQuery(fmt.Sprintf("v1/topics/%s/operation/partitions", cmd.topic), query.Encode()))
+	responseBytes, err := client.HTTPServicePutQuery(fmt.Sprintf("v1/topics/%s/operation/partitions", cmd.topic), query.Encode())
+	if err != nil {
+		client.PrintMessageAndExit(err.Error())
+	} else {
+		client.PrintJSONBytes(responseBytes)
+	}
 	return nil
 }
 func (cmd *TopicHandler) runProducerTest(c *kingpin.ParseContext) error {
 	query := url.Values{}
 	query.Set("messages", strconv.FormatInt(int64(cmd.produceMessageCount), 10))
-	cli.PrintJSON(cli.HTTPPutQuery(fmt.Sprintf("v1/topics/%s/operation/producer-test", cmd.topic), query.Encode()))
+	responseBytes, err := client.HTTPServicePutQuery(fmt.Sprintf("v1/topics/%s/operation/producer-test", cmd.topic), query.Encode())
+	if err != nil {
+		client.PrintMessageAndExit(err.Error())
+	} else {
+		client.PrintJSONBytes(responseBytes)
+	}
 	return nil
 }
 func (cmd *TopicHandler) runDelete(c *kingpin.ParseContext) error {
-	cli.PrintJSON(cli.HTTPDelete(fmt.Sprintf("v1/topics/%s", cmd.topic)))
+	responseBytes, err := client.HTTPServiceDelete(fmt.Sprintf("v1/topics/%s", cmd.topic))
+	if err != nil {
+		client.PrintMessageAndExit(err.Error())
+	} else {
+		client.PrintJSONBytes(responseBytes)
+	}
 	return nil
 }
 func (cmd *TopicHandler) runOffsets(c *kingpin.ParseContext) error {
 	var timeVal int64
 	var err error
-	switch (cmd.offsetsTime) {
+	switch cmd.offsetsTime {
 	case "first":
 		timeVal = -2
 	case "last":
@@ -116,7 +164,12 @@ func (cmd *TopicHandler) runOffsets(c *kingpin.ParseContext) error {
 	}
 	query := url.Values{}
 	query.Set("time", strconv.FormatInt(timeVal, 10))
-	cli.PrintJSON(cli.HTTPGetQuery(fmt.Sprintf("v1/topics/%s/offsets", cmd.topic), query.Encode()))
+	responseBytes, err := client.HTTPServiceGetQuery(fmt.Sprintf("v1/topics/%s/offsets", cmd.topic), query.Encode())
+	if err != nil {
+		client.PrintMessageAndExit(err.Error())
+	} else {
+		client.PrintJSONBytes(responseBytes)
+	}
 	return nil
 }
 

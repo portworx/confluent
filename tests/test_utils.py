@@ -3,6 +3,7 @@ import pytest
 import json
 import sdk_cmd as command
 import sdk_spin as spin
+import sdk_tasks as tasks
 
 from tests.config import (
     DEFAULT_PARTITION_COUNT,
@@ -47,7 +48,7 @@ def broker_count_check(count):
 def service_plan_wait(plan_name):
     def fun():
         try:
-            return service_cli('plan show {}'.format(plan_name))
+            return service_cli('plan show --json {}'.format(plan_name))
         except:
             return False
 
