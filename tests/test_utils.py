@@ -3,6 +3,7 @@ import pytest
 import json
 import sdk_cmd as command
 import sdk_spin as spin
+import sdk_tasks as tasks
 
 from tests.config import (
     DEFAULT_PARTITION_COUNT,
@@ -25,11 +26,12 @@ DYNAMIC_PORT_OPTIONS_DICT = {"brokers": {"port": 0}}
 DEPLOY_STRATEGY_SERIAL_CANARY = {"service": {"deploy_strategy": "serial-canary"}}
 
 
-def service_cli(cmd_str):
+def service_cli(cmd_str, get_json=True):
     full_cmd = '{} {}'.format(PACKAGE_NAME, cmd_str)
     ret_str = command.run_cli(full_cmd)
-    return json.loads(ret_str)
-
+    if get_json:
+        return json.loads(ret_str)
+    return ret_str
 
 def broker_count_check(count):
     def fun():
@@ -47,8 +49,21 @@ def broker_count_check(count):
 def service_plan_wait(plan_name):
     def fun():
         try:
-            return service_cli('plan show {}'.format(plan_name))
+            return service_cli('plan show --json {}'.format(plan_name))
         except:
             return False
 
     return spin.time_wait_return(fun)
+
+
+def wait_plan_complete():
+    def plan_complete_fun():
+        try:
+            pl = service_cli('plan show --json {}'.format(DEFAULT_PLAN_NAME))
+            if pl['status'] == 'COMPLETE':
+                return True
+        except:
+            pass
+        return False
+
+    spin.time_wait_return(plan_complete_fun)

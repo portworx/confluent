@@ -120,7 +120,7 @@ class CITester(object):
 requests==2.10.0
 dcos==0.4.16
 dcoscli==0.4.16
-dcos-shakedown==1.4.4
+dcos-shakedown==1.4.2
 ''')
             requirements_file.flush()
             requirements_file.close()

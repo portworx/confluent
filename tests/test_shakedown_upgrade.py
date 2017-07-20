@@ -30,6 +30,7 @@ def teardown_module(module):
 
 @pytest.mark.sanity
 @pytest.mark.smoke
+@pytest.mark.skip(reason="Serialization Error. Enable after INFINITY-2022")
 def test_upgrade():
 
     test_version = upgrade.get_pkg_version(PACKAGE_NAME)
