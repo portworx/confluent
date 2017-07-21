@@ -10,7 +10,6 @@ import sdk_utils as utils
 import sdk_tasks as tasks
 
 from tests.test_utils import (
-    PACKAGE_NAME,
     DEFAULT_BROKER_COUNT,
     DEFAULT_POD_TYPE,
     SERVICE_NAME,
@@ -20,7 +19,7 @@ from tests.test_utils import (
 
 
 def setup_module(module):
-    install.uninstall(PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME)
     utils.gc_frameworks()
 
 
@@ -33,7 +32,7 @@ def teardown_module(module):
 @pytest.mark.skip(reason="Serialization Error. Enable after INFINITY-2022")
 def test_upgrade():
 
-    test_version = upgrade.get_pkg_version(PACKAGE_NAME)
+    test_version = upgrade.get_pkg_version(SERVICE_NAME)
     print('Found test version: {}'.format(test_version))
 
     repositories = json.loads(cmd.run_cli('package repo list --json'))['repositories']
@@ -50,18 +49,18 @@ def test_upgrade():
         if repo['name'] != 'Universe':
             shakedown.remove_package_repo(repo['name'])
 
-    universe_version = upgrade.get_pkg_version(PACKAGE_NAME)
+    universe_version = upgrade.get_pkg_version(SERVICE_NAME)
     print('Found Universe version: {}'.format(universe_version))
 
     print('Installing Universe version: {}'.format(universe_version))
-    install.install(PACKAGE_NAME, DEFAULT_BROKER_COUNT, additional_options= { "service": { "user": "root" } })
+    install.install(SERVICE_NAME, DEFAULT_BROKER_COUNT, additional_options= { "service": { "user": "root" } })
     print('Installation complete for Universe version: {}'.format(universe_version))
 
     tasks.check_running(SERVICE_NAME, DEFAULT_BROKER_COUNT)
     broker_ids = tasks.get_task_ids(SERVICE_NAME, 'broker-')
 
     print('Adding test version to repository with name: {} and url: {}'.format(test_repo_name, test_repo_url))
-    upgrade.add_repo(test_repo_name, test_repo_url, universe_version, 0, PACKAGE_NAME)
+    upgrade.add_repo(test_repo_name, test_repo_url, universe_version, 0, SERVICE_NAME)
 
     print('Upgrading to test version: {}'.format(test_version))
     marathon.destroy_app(SERVICE_NAME)
@@ -69,7 +68,7 @@ def test_upgrade():
     print('Installing test version: {}'.format(test_version))
 
     # installation will return with old tasks because they are still running
-    install.install(PACKAGE_NAME, DEFAULT_BROKER_COUNT, additional_options= { "service": { "user": "root" } })
+    install.install(SERVICE_NAME, DEFAULT_BROKER_COUNT, additional_options= { "service": { "user": "root" } })
     print('Installation complete for test version: {}'.format(test_version))
 
     # wait till tasks are restarted

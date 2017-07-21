@@ -1,20 +1,19 @@
 import pytest
+import urllib
 
-import sdk_install as install
-import sdk_tasks as tasks
-import sdk_spin as spin
-import sdk_cmd as command
-import sdk_utils as utils
 import dcos
 import dcos.config
 import dcos.http
 
-import urllib
+import sdk_install as install
+import sdk_spin as spin
+import sdk_cmd as command
+import sdk_utils as utils
+
 
 from tests.test_utils import (
     DEFAULT_PARTITION_COUNT,
     DEFAULT_REPLICATION_FACTOR,
-    PACKAGE_NAME,
     SERVICE_NAME,
     DEFAULT_BROKER_COUNT,
     DEFAULT_TOPIC_NAME,
@@ -24,18 +23,22 @@ from tests.test_utils import (
     DEFAULT_PLAN_NAME,
     DEFAULT_TASK_NAME,
     service_cli,
-    wait_plan_complete
+    wait_plan_complete,
+    restart_broker_pods,
+    replace_broker_pod,
+    create_topic,
+    delete_topic
 )
 
 
 def setup_module(module):
-    install.uninstall(SERVICE_NAME, PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME, SERVICE_NAME)
     utils.gc_frameworks()
-    install.install(PACKAGE_NAME,  DEFAULT_BROKER_COUNT, service_name = SERVICE_NAME)
+    install.install(SERVICE_NAME,  DEFAULT_BROKER_COUNT, service_name = SERVICE_NAME)
 
 
 def teardown_module(module):
-    install.uninstall(SERVICE_NAME, PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME, SERVICE_NAME)
 
 
 # --------- Endpoints -------------
@@ -56,9 +59,9 @@ def test_endpoints_address():
 @pytest.mark.smoke
 @pytest.mark.sanity
 def test_endpoints_zookeeper():
-    zookeeper = command.run_cli('{} endpoints zookeeper'.format(PACKAGE_NAME))
+    zookeeper = command.run_cli('{} endpoints zookeeper'.format(SERVICE_NAME))
     assert zookeeper.rstrip() == (
-        'master.mesos:2181/dcos-service-{}'.format(PACKAGE_NAME)
+        'master.mesos:2181/dcos-service-{}'.format(SERVICE_NAME)
     )
 
 
@@ -76,7 +79,7 @@ def test_broker_list():
 @pytest.mark.sanity
 def test_broker_invalid():
     try:
-        command.run_cli('{} broker get {}'.format(PACKAGE_NAME, DEFAULT_BROKER_COUNT + 1))
+        command.run_cli('{} broker get {}'.format(SERVICE_NAME, DEFAULT_BROKER_COUNT + 1))
         assert False, "Should have failed"
     except AssertionError as arg:
         raise arg
@@ -89,21 +92,13 @@ def test_broker_invalid():
 @pytest.mark.smoke
 @pytest.mark.sanity
 def test_pods_restart():
-    for i in range(DEFAULT_BROKER_COUNT):
-        broker_id = tasks.get_task_ids(SERVICE_NAME,'{}-{}-{}'.format(DEFAULT_POD_TYPE, i, DEFAULT_TASK_NAME))
-        restart_info = service_cli('pods restart {}-{}'.format(DEFAULT_POD_TYPE, i))
-        tasks.check_tasks_updated(SERVICE_NAME, '{}-{}-{}'.format(DEFAULT_POD_TYPE, i, DEFAULT_TASK_NAME), broker_id)
-        assert len(restart_info) == 2
-        assert restart_info['tasks'][0] == '{}-{}-{}'.format(DEFAULT_POD_TYPE, i, DEFAULT_TASK_NAME)
+    restart_broker_pods(SERVICE_NAME)
 
 
 @pytest.mark.smoke
 @pytest.mark.sanity
 def test_pods_replace():
-    broker_0_id = tasks.get_task_ids(SERVICE_NAME, '{}-0-{}'.format(DEFAULT_POD_TYPE, DEFAULT_TASK_NAME))
-    service_cli('pods replace {}-0'.format(DEFAULT_POD_TYPE))
-    tasks.check_tasks_updated(SERVICE_NAME, '{}-0-{}'.format(DEFAULT_POD_TYPE, DEFAULT_TASK_NAME), broker_0_id)
-    tasks.check_running(SERVICE_NAME, DEFAULT_BROKER_COUNT)
+    replace_broker_pod()
 
 
 # --------- Topics -------------
@@ -111,33 +106,12 @@ def test_pods_replace():
 @pytest.mark.smoke
 @pytest.mark.sanity
 def test_topic_create():
-
-    create_info = service_cli(
-        'topic create {}'.format(EPHEMERAL_TOPIC_NAME)
-    )
-    print(create_info)
-    assert ('Created topic "%s".\n' % EPHEMERAL_TOPIC_NAME in create_info['message'])
-
-    topic_list_info = service_cli('topic list')
-    assert EPHEMERAL_TOPIC_NAME in topic_list_info
-
-    topic_info = service_cli('topic describe {}'.format(EPHEMERAL_TOPIC_NAME))
-    assert len(topic_info) >= 1
-    assert len(topic_info['partitions']) == DEFAULT_PARTITION_COUNT
-
+    create_topic()
 
 @pytest.mark.smoke
 @pytest.mark.sanity
 def test_topic_delete():
-    delete_info = service_cli('topic delete {}'.format(EPHEMERAL_TOPIC_NAME))
-
-    assert len(delete_info) == 1
-    assert delete_info['message'].startswith('Output: Topic {} is marked for deletion'.format(EPHEMERAL_TOPIC_NAME))
-
-    topic_info = service_cli('topic describe {}'.format(EPHEMERAL_TOPIC_NAME))
-    assert len(topic_info) == 1
-    assert len(topic_info['partitions']) == DEFAULT_PARTITION_COUNT
-
+    delete_topic()
 
 @pytest.fixture
 def default_topic():
@@ -274,7 +248,7 @@ def test_pods_cli():
 def test_suppress():
     dcos_url = dcos.config.get_config_val('core.dcos_url')
     suppressed_url = urllib.parse.urljoin(dcos_url,
-                                          'service/{}/v1/state/properties/suppressed'.format(PACKAGE_NAME))
+                                          'service/{}/v1/state/properties/suppressed'.format(SERVICE_NAME))
 
     def fun():
         response = dcos.http.get(suppressed_url)

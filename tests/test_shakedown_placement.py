@@ -8,7 +8,6 @@ import shakedown
 
 
 from tests.test_utils import (
-    PACKAGE_NAME,
     SERVICE_NAME,
     DEFAULT_BROKER_COUNT,
     DEFAULT_PLAN_NAME,
@@ -17,13 +16,13 @@ from tests.test_utils import (
 
 
 def setup_module(module):
-    install.uninstall(SERVICE_NAME, PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME, SERVICE_NAME)
     utils.gc_frameworks()
 
 
 # gc_frameworks to make sure after each uninstall
 def teardown_module(module):
-    install.uninstall(SERVICE_NAME, PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME, SERVICE_NAME)
 
     
 # --------- Placement -------------
@@ -33,7 +32,7 @@ def teardown_module(module):
 @pytest.mark.sanity
 def test_placement_unique_hostname():
     install.install(
-        PACKAGE_NAME,
+        SERVICE_NAME,
         DEFAULT_BROKER_COUNT,
         service_name=SERVICE_NAME,
         additional_options = {'service':{'placement_constraint':'hostname:UNIQUE'}}
@@ -43,14 +42,14 @@ def test_placement_unique_hostname():
 
     pl = service_cli('plan show --json {}'.format(DEFAULT_PLAN_NAME))
     assert pl['status'] == 'COMPLETE'
-    install.uninstall(SERVICE_NAME, PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME, SERVICE_NAME)
 
 
 @pytest.mark.smoke
 @pytest.mark.sanity
 def test_placement_max_one_per_hostname():
     install.install(
-        PACKAGE_NAME,
+        SERVICE_NAME,
         DEFAULT_BROKER_COUNT,
         service_name=SERVICE_NAME,
         additional_options={'service':{'placement_constraint':'hostname:MAX_PER:1'}}
@@ -60,7 +59,7 @@ def test_placement_max_one_per_hostname():
 
     pl = service_cli('plan show  --json {}'.format(DEFAULT_PLAN_NAME))
     assert pl['status'] == 'COMPLETE'
-    install.uninstall(SERVICE_NAME, PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME, SERVICE_NAME)
 
 
 @pytest.mark.smoke
@@ -72,14 +71,14 @@ def test_marathon_rack_not_found():
         except:
             return False
 
-    shakedown.install_package(PACKAGE_NAME,
+    shakedown.install_package(SERVICE_NAME,
                               service_name=SERVICE_NAME,
                               options_json=install.get_package_options(
                                   additional_options={'service':{'placement_constraint':'rack_id:LIKE:rack-foo-.*'}}
                               ),
                               wait_for_completion=False)
     try:
-        tasks.check_running(PACKAGE_NAME, 1, timeout_seconds=120)
+        tasks.check_running(SERVICE_NAME, 1, timeout_seconds=120)
         assert False, "Should have failed to install"
     except AssertionError as arg:
         raise arg
@@ -96,5 +95,5 @@ def test_marathon_rack_not_found():
     assert pl['phases'][0]['steps'][0]['status'] in ('PREPARED', 'PENDING')
     assert pl['phases'][0]['steps'][1]['status'] == 'PENDING'
     assert pl['phases'][0]['steps'][2]['status'] == 'PENDING'
-    install.uninstall(SERVICE_NAME, PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME, SERVICE_NAME)
 

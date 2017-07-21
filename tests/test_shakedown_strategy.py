@@ -7,7 +7,6 @@ import sdk_spin as spin
 import sdk_tasks as tasks
 import sdk_utils as utils
 from tests.test_utils import (
-    PACKAGE_NAME,
     SERVICE_NAME,
     DEFAULT_BROKER_COUNT,
     DEFAULT_POD_TYPE,
@@ -23,9 +22,9 @@ from tests.test_utils import (
 
 
 def setup_module(module):
-    install.uninstall(SERVICE_NAME, PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME, SERVICE_NAME)
     utils.gc_frameworks()
-    shakedown.install_package(PACKAGE_NAME,
+    shakedown.install_package(SERVICE_NAME,
                               service_name=SERVICE_NAME,
                               options_json=install.get_package_options(
                                   additional_options=DEPLOY_STRATEGY_SERIAL_CANARY
@@ -34,7 +33,7 @@ def setup_module(module):
 
 
 def teardown_module(module):
-    install.uninstall(SERVICE_NAME, PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME, SERVICE_NAME)
 
 
 # --------- Deploy Strategy -------------
@@ -141,7 +140,7 @@ def test_increase_count():
     marathon.bump_task_count_config(SERVICE_NAME, 'BROKER_COUNT')
 
     try:
-        tasks.check_running(PACKAGE_NAME, DEFAULT_BROKER_COUNT + 1, timeout_seconds=60)
+        tasks.check_running(SERVICE_NAME, DEFAULT_BROKER_COUNT + 1, timeout_seconds=60)
         assert False, "Should not start task now"
     except AssertionError as arg:
         raise arg

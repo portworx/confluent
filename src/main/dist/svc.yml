@@ -13,6 +13,11 @@ pods:
       - {{LIBMESOS_URI}}
       - {{KAFKA_STATSD_URI}}
       - {{CLIENT_STATSD_URI}}
+    {{#ENABLE_VIRTUAL_NETWORK}}
+    networks:
+      {{VIRTUAL_NETWORK_NAME}}:
+        labels: {{CNI_PLUGIN_LABELS}}
+    {{/ENABLE_VIRTUAL_NETWORK}}
     tasks:
       broker:
         cpus: {{BROKER_CPUS}}

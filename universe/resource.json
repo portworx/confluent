@@ -3,7 +3,7 @@
     "uris": {
       "jre-tar-gz": "{{jre-url}}",
       "libmesos-bundle-tar-gz": "{{libmesos-bundle-url}}",
-      "bootstrap-zip": "http://downloads.mesosphere.com/dcos-commons/artifacts/0.14.0/bootstrap.zip",
+      "bootstrap-zip": "https://downloads.mesosphere.io/dse/assets/bootstrap//bootstrap_0191.zip",
       "kafka-tgz": "https://packages.confluent.io/archive/3.2/confluent-3.2.2-2.11.tar.gz",
       "kafka-scheduler-zip": "{{artifact-dir}}/confluent-kafka-scheduler.zip",
       "executor-zip": "http://downloads.mesosphere.com/dcos-commons/artifacts/0.14.0/executor.zip",

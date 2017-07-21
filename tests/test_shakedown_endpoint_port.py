@@ -5,7 +5,6 @@ import sdk_marathon as marathon
 import sdk_tasks as tasks
 import sdk_utils as utils
 from tests.test_utils import (
-    PACKAGE_NAME,
     SERVICE_NAME,
     DEFAULT_BROKER_COUNT,
     DYNAMIC_PORT_OPTIONS_DICT,
@@ -15,13 +14,14 @@ from tests.test_utils import (
 )
 
 
+
 def setup_module(module):
-    install.uninstall(SERVICE_NAME, PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME, SERVICE_NAME)
     utils.gc_frameworks()
 
 
 def teardown_module(module):
-    install.uninstall(SERVICE_NAME, PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME, SERVICE_NAME)
 
 
 # --------- Port -------------
@@ -29,17 +29,17 @@ def teardown_module(module):
 
 @pytest.yield_fixture
 def dynamic_port_config():
-    install.install(PACKAGE_NAME,
+    install.install(SERVICE_NAME,
                     DEFAULT_BROKER_COUNT,
                     service_name=SERVICE_NAME,
                     additional_options=DYNAMIC_PORT_OPTIONS_DICT)
     yield
-    install.uninstall(SERVICE_NAME, PACKAGE_NAME)
+    install.uninstall(SERVICE_NAME, SERVICE_NAME)
 
 
 @pytest.fixture
 def static_port_config():
-    install.install(PACKAGE_NAME,
+    install.install(SERVICE_NAME,
                     DEFAULT_BROKER_COUNT,
                     service_name=SERVICE_NAME,
                     additional_options=STATIC_PORT_OPTIONS_DICT)
