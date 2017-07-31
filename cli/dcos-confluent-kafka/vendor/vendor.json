@@ -21,6 +21,30 @@
 			"revisionTime": "2015-10-22T06:55:26Z"
 		},
 		{
+			"checksumSHA1": "f5JWGRdlB8EMWC7Z+SeFdBekr4Y=",
+			"path": "github.com/mesosphere/dcos-commons/cli",
+			"revision": "0bfcc4fea174862d0abb506dc779ab3358b880f8",
+			"revisionTime": "2017-07-31T17:28:40Z"
+		},
+		{
+			"checksumSHA1": "Ph/R+HEce3FO9VruptIN5PtjAy4=",
+			"path": "github.com/mesosphere/dcos-commons/cli/client",
+			"revision": "0bfcc4fea174862d0abb506dc779ab3358b880f8",
+			"revisionTime": "2017-07-31T17:28:40Z"
+		},
+		{
+			"checksumSHA1": "XDpvv1cFTDjsDHjdJbKni1VW1mg=",
+			"path": "github.com/mesosphere/dcos-commons/cli/commands",
+			"revision": "0bfcc4fea174862d0abb506dc779ab3358b880f8",
+			"revisionTime": "2017-07-31T17:28:40Z"
+		},
+		{
+			"checksumSHA1": "8WVsFuHHeNyqHoZof+6yjmPeUgU=",
+			"path": "github.com/mesosphere/dcos-commons/cli/config",
+			"revision": "0bfcc4fea174862d0abb506dc779ab3358b880f8",
+			"revisionTime": "2017-07-31T17:28:40Z"
+		},
+		{
 			"checksumSHA1": "uEc9/1HbYGeK7wPStF6FmUlfzGE=",
 			"path": "github.com/nicksnyder/go-i18n/i18n",
 			"revision": "3e70a1a463008cea6726380c908b1a6a8bdf7b24",
@@ -63,5 +87,5 @@
 			"revisionTime": "2017-07-13T20:15:20Z"
 		}
 	],
-	"rootPath": "github.com/mesosphere/dcos-commons/frameworks/kafka/cli/dcos-kafka"
+	"rootPath": "github.com/mesosphere/confluent/cli/dcos-confluent-kafka"
 }
