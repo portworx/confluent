@@ -1,0 +1,3 @@
+dcos-kafka*
+*.whl
+native-*

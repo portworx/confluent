@@ -21,9 +21,9 @@ ext {
 }
 
 dependencies {
-    compile "mesosphere:scheduler:0.19.3.1"
-    compile "mesosphere:executor:0.19.3.1"
-    testCompile "mesosphere:testing:0.19.3.1"
+    compile "mesosphere:scheduler:0.20.1"
+    compile "mesosphere:executor:0.20.1"
+    testCompile "mesosphere:testing:0.20.1"
 }
 
 

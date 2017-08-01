@@ -1,2 +1,3 @@
-dcos-*
+dcos-confluent-kafka*
 *.whl
+native-*

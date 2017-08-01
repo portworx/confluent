@@ -236,9 +236,9 @@ def test_state_cli():
 @pytest.mark.smoke
 @pytest.mark.sanity
 def test_pods_cli():
-    assert service_cli('pods list')
-    assert service_cli('pods status {}-0'.format(DEFAULT_POD_TYPE))
-    assert service_cli('pods info {}-0'.format(DEFAULT_POD_TYPE))
+    assert service_cli('pod list')
+    assert service_cli('pod status {}-0'.format(DEFAULT_POD_TYPE))
+    assert service_cli('pod info {}-0'.format(DEFAULT_POD_TYPE))
 
 # --------- Suppressed -------------
 

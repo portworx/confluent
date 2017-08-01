@@ -69,7 +69,7 @@ def wait_plan_complete():
 def restart_broker_pods(service_name=SERVICE_NAME):
     for i in range(DEFAULT_BROKER_COUNT):
         broker_id = tasks.get_task_ids(service_name,'{}-{}-{}'.format(DEFAULT_POD_TYPE, i, DEFAULT_TASK_NAME))
-        restart_info = service_cli('pods restart {}-{}'.format(DEFAULT_POD_TYPE, i))
+        restart_info = service_cli('pod restart {}-{}'.format(DEFAULT_POD_TYPE, i))
         tasks.check_tasks_updated(service_name, '{}-{}-{}'.format(DEFAULT_POD_TYPE, i, DEFAULT_TASK_NAME), broker_id)
         assert len(restart_info) == 2
         assert restart_info['tasks'][0] == '{}-{}-{}'.format(DEFAULT_POD_TYPE, i, DEFAULT_TASK_NAME)
@@ -77,7 +77,7 @@ def restart_broker_pods(service_name=SERVICE_NAME):
 
 def replace_broker_pod(service_name=SERVICE_NAME):
     broker_0_id = tasks.get_task_ids(service_name, '{}-0-{}'.format(DEFAULT_POD_TYPE, DEFAULT_TASK_NAME))
-    service_cli('pods replace {}-0'.format(DEFAULT_POD_TYPE))
+    service_cli('pod replace {}-0'.format(DEFAULT_POD_TYPE))
     tasks.check_tasks_updated(service_name, '{}-0-{}'.format(DEFAULT_POD_TYPE, DEFAULT_TASK_NAME), broker_0_id)
     tasks.check_running(service_name, DEFAULT_BROKER_COUNT)
     # wait till all brokers register
