@@ -71,6 +71,7 @@ def restart_broker_pods(service_name=SERVICE_NAME):
         broker_id = tasks.get_task_ids(service_name,'{}-{}-{}'.format(DEFAULT_POD_TYPE, i, DEFAULT_TASK_NAME))
         restart_info = service_cli('pod restart {}-{}'.format(DEFAULT_POD_TYPE, i))
         tasks.check_tasks_updated(service_name, '{}-{}-{}'.format(DEFAULT_POD_TYPE, i, DEFAULT_TASK_NAME), broker_id)
+        tasks.check_running(service_name, DEFAULT_BROKER_COUNT)
         assert len(restart_info) == 2
         assert restart_info['tasks'][0] == '{}-{}-{}'.format(DEFAULT_POD_TYPE, i, DEFAULT_TASK_NAME)
 

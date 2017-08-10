@@ -98,7 +98,7 @@ def test_pods_restart():
 @pytest.mark.smoke
 @pytest.mark.sanity
 def test_pods_replace():
-    replace_broker_pod()
+    replace_broker_pod(SERVICE_NAME)
 
 
 # --------- Topics -------------
