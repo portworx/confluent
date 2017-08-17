@@ -2,7 +2,6 @@
 post_title: Connecting clients
 menu_order: 30
 post_excerpt: ""
-feature_maturity: preview
 enterprise: 'no'
 ---
 

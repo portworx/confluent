@@ -2,7 +2,6 @@
 post_title: Beta Confluent Kafka v
 menu_order: 0
 post_excerpt: ""
-feature_maturity: preview
 enterprise: 'no'
 ---
 

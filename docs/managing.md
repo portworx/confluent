@@ -2,7 +2,6 @@
 post_title: Managing
 menu_order: 40
 post_excerpt: ""
-feature_maturity: preview
 enterprise: 'no'
 ---
 
@@ -11,24 +10,7 @@ You can make changes to the service after it has been launched. Configuration ma
 
 Edit the runtime environment of the scheduler to make configuration changes. After making a change, the scheduler will be restarted and automatically deploy any detected changes to the service.
 
-
 Some changes, such as decreasing the number of brokers or changing volume requirements, are not supported after initial deployment. See [Limitations](#limitations).
-
-To make configuration changes via scheduler environment updates, perform the following steps:
-
-1. Visit http://yourcluster.com/  to access the DC/OS web interface.
-
-1. Go to the **Services** tab and click the service to be configured (default `confluent-kafka`).
-
-1. Click `Edit` in the upper right. On DC/OS 1.9.x, the `Edit` button is in a menu made up of three dots.
-
-1. Navigate to `Environment` (or `Environment variables`) and search for the option to be updated.
-
-1. Update the option value and click `Review and run` (or `Deploy changes`).
-
-1. The scheduler process will be restarted with the new configuration, and will validate any detected changes.
-
-1. If the detected changes pass validation, the relaunched Scheduler will deploy the changes by sequentially relaunching affected tasks as described above.
 
 To see a full list of available options, run `dcos package describe --config beta-confluent-kafka` in the CLI, or browse the Confluent Kafka install dialog in the DC/OS web interface.
 

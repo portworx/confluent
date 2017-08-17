@@ -2,7 +2,6 @@
 post_title: Support
 menu_order: 60
 post_excerpt: ""
-feature_maturity: preview
 enterprise: 'no'
 ---
 

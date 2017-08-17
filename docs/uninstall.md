@@ -2,7 +2,6 @@
 post_title: Uninstalling
 menu_order: 20
 post_excerpt: ""
-feature_maturity: preview
 enterprise: 'no'
 ---
 

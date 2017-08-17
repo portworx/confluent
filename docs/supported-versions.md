@@ -2,7 +2,6 @@
 post_title: Supported Versions
 menu_order: 70
 post_excerpt: ""
-feature_maturity: preview
 enterprise: 'no'
 ---
 

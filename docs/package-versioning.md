@@ -2,7 +2,6 @@
 post_title: Package Versioning
 menu_order: 80
 post_excerpt: ""
-feature_maturity: preview
 enterprise: 'no'
 ---
 
