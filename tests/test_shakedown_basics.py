@@ -5,9 +5,10 @@ import dcos
 import dcos.config
 import dcos.http
 
-import sdk_install as install
-import sdk_spin as spin
 import sdk_cmd as command
+import sdk_install as install
+import sdk_metrics as metrics
+import sdk_spin as spin
 import sdk_utils as utils
 
 
@@ -22,6 +23,7 @@ from tests.test_utils import (
     DEFAULT_PHASE_NAME,
     DEFAULT_PLAN_NAME,
     DEFAULT_TASK_NAME,
+    DEFAULT_KAFKA_TIMEOUT,
     service_cli,
     wait_plan_complete,
     restart_broker_pods,
@@ -258,3 +260,6 @@ def test_suppress():
     spin.time_wait_noisy(fun)
 
 
+@pytest.mark.sanity
+def test_metrics():
+    metrics.wait_for_any_metrics(SERVICE_NAME, "kafka-0-broker", DEFAULT_KAFKA_TIMEOUT)
