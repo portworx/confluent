@@ -5,7 +5,7 @@
       "kafka-jre-tar-gz": "{{jre-url}}",
       "libmesos-bundle-tar-gz": "{{libmesos-bundle-url}}",
       "bootstrap-zip": "https://downloads.mesosphere.com/dcos-commons/artifacts/0.19.1/bootstrap.zip",
-      "kafka-tgz": "https://packages.confluent.io/archive/3.2/confluent-3.2.2-2.11.tar.gz",
+      "kafka-tgz": "https://packages.confluent.io/archive/3.3/confluent-3.3.0-2.11.tar.gz",
       "kafka-scheduler-zip": "{{artifact-dir}}/confluent-kafka-scheduler.zip",
       "executor-zip": "http://downloads.mesosphere.com/dcos-commons/artifacts/0.14.0/executor.zip",
       "kafka-statsd-jar": "http://downloads.mesosphere.com/kafka/assets/kafka-statsd-metrics2-0.5.3.jar",

@@ -25,6 +25,7 @@
     "FRAMEWORK_NAME": "{{service.name}}",
     "FRAMEWORK_PRINCIPAL": "{{service.principal}}",
     "FRAMEWORK_USER": "{{service.user}}",
+    "FRAMEWORK_LOG_LEVEL": "{{service.log_level}}",
     "CMD_PREFIX": "{{service.cmd_prefix}}",
     "SECRET_NAME": "{{service.secret_name}}",
     "EXECUTOR_URI": "{{resource.assets.uris.executor-zip}}",
@@ -62,7 +63,7 @@
     {{/service.secret_name}}
 
     "CONFIG_TEMPLATE_PATH": "confluent-kafka-scheduler",
-    "KAFKA_VERSION_PATH": "confluent-3.2.2",
+    "KAFKA_VERSION_PATH": "confluent-3.3.0",
     "KAFKA_ZOOKEEPER_URI": "{{kafka.kafka_zookeeper_uri}}",
 
     {{#kafka.kafka_advertise_host_ip}}
