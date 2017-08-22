@@ -38,11 +38,11 @@
     "KAFKA_JAVA_URI": "{{resource.assets.uris.kafka-jre-tar-gz}}",
     "MESOS_API_VERSION": "{{service.mesos_api_version}}",
 
-    {{#service.virtual_networks}}
+    {{#service.virtual_network_enabled}}
     "ENABLE_VIRTUAL_NETWORK": "yes",
     "VIRTUAL_NETWORK_NAME": "{{brokers.virtual_network}}",
     "CNI_PLUGIN_LABELS": "{{brokers.cni_plugin_labels}}",
-    {{/service.virtual_networks}}
+    {{/service.virtual_network_enabled}}
 
 
     "PLACEMENT_CONSTRAINTS": "{{service.placement_constraint}}",
@@ -79,8 +79,6 @@
     "TASKCFG_ALL_KAFKA_CONFLUENT_SUPPORT_CUSTOMER_ID": "{{kafka.confluent_support_customer_id}}",
     "TASKCFG_ALL_KAFKA_METRICS_REPORTERS": "{{kafka.kafka_metrics_reporters}}",
     "TASKCFG_ALL_METRIC_REPORTERS": "{{kafka.metric_reporters}}",
-    "TASKCFG_ALL_KAFKA_CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS": "broker.{{service.name}}.l4lb.thisdcos.directory:9092",
-    "TASKCFG_ALL_KAFKA_CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT": "master.mesos:2181/dcos-service-{{service.name}}",
     "TASKCFG_ALL_KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC": "{{kafka.confluent_metrics_reporter_topic}}",
     "TASKCFG_ALL_KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS": "{{kafka.confluent_metrics_reporter_topic_replicas}}",
     "TASKCFG_ALL_KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS": "{{kafka.offsets_topic_num_partitions}}",

@@ -40,7 +40,7 @@
           "type":"string",
           "default":"serial"
         },
-        "virtual_networks": {
+        "virtual_network_enabled": {
           "description": "Enable DC/OS Virtual Networking",
           "type": "boolean",
           "default": false
