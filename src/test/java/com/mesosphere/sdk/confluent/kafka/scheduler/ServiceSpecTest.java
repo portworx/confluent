@@ -7,7 +7,7 @@ public class ServiceSpecTest extends BaseServiceSpecTest {
 
     public ServiceSpecTest() {
         super(
-                "FRAMEWORK_NAME", "kafka",
+                "SERVICE_NAME", "kafka",
                 "CONFIG_TEMPLATE_PATH", "frameworks/kafka",
                 "KAFKA_URI", "some_uri",
                 "BOOTSTRAP_URI", "another_uri",

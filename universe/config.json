@@ -20,12 +20,12 @@
           "description": "The user that the service will run as.",
           "default": "nobody"
         },
-        "principal": {
-          "description": "The principal for the Kafka service instance.",
+        "service_account": {
+          "description": "The service account for DC/OS service authentication. This is typically left empty to use the default unless service authentication is needed. The value given here is passed as the principal of Mesos framework.",
           "type": "string",
-          "default": "confluent-kafka-principal"
+          "default": ""
         },
-        "secret_name": {
+        "service_account_secret": {
           "description": "Name of the Secret Store credentials to use for DC/OS service authentication. This should be left empty unless service authentication is needed.",
           "type": "string",
           "default": ""
@@ -41,9 +41,19 @@
           "default":"serial"
         },
         "virtual_network_enabled": {
-          "description": "Enable DC/OS Virtual Networking",
+          "description": "Enable virtual networking",
           "type": "boolean",
           "default": false
+        },
+        "virtual_network_name": {
+          "description": "The name of the virtual network to join",
+          "type": "string",
+          "default": "dcos"
+        },
+        "virtual_network_plugin_labels": {
+          "description": "Labels to pass to the virtual network plugin. Comma-separated key:value pairs. For example: k_0:v_0,k_1:v_1,...,k_n:v_n",
+          "type": "string",
+          "default": ""
         },
         "log_level": {
           "description": "The log level for the DC/OS service.",
@@ -109,16 +119,6 @@
           "description": "Port for broker to listen on",
           "type": "integer",
           "default": 0
-        },
-        "virtual_network": {
-          "description": "Name of virtual network to join",
-          "type": "string",
-          "default": "dcos"
-        },
-        "cni_plugin_labels": {
-          "description": "Labels to pass to CNI plugin. Comma-seperated key:value pairs. For example [k_0:v_0,k_1:v_1,...,k_n:v_n]",
-          "type": "string",
-          "default": ""
         }
       },
       "required":[
