@@ -1,106 +1,188 @@
 '''Utilities relating to installing services'''
 
 import collections
+import logging
+
 import dcos.errors
 import dcos.marathon
-import sdk_api
-import sdk_spin
-import sdk_tasks
-import sdk_utils
-import shakedown
-
 import os
+import shakedown
 import time
+from retrying import retry
+
+import sdk_api
+import sdk_plan
+import sdk_utils
+
+log = logging.getLogger(__name__)
+
+TIMEOUT_SECONDS = 15 * 60
+
+
+@retry(stop_max_attempt_number=3, retry_on_exception=lambda e: isinstance(e, dcos.errors.DCOSException))
+def retried_shakedown_install(
+        package_name,
+        package_version,
+        service_name,
+        merged_options,
+        timeout_seconds,
+        expected_running_tasks):
+    shakedown.install_package(
+        package_name,
+        package_version=package_version,
+        service_name=service_name,
+        options_json=merged_options,
+        wait_for_completion=True,
+        timeout_sec=timeout_seconds,
+        expected_running_tasks=expected_running_tasks)
 
 
 def install(
         package_name,
-        running_task_count,
+        expected_running_tasks,
         service_name=None,
         additional_options={},
         package_version=None,
-        check_suppression=True):
+        timeout_seconds=TIMEOUT_SECONDS,
+        wait_for_deployment=True):
     if not service_name:
         service_name = package_name
     start = time.time()
     merged_options = get_package_options(additional_options)
 
-    sdk_utils.out('Installing {} with options={} version={}'.format(
-        package_name, merged_options, package_version))
+    log.info('Installing {}/{} with options={} version={}'.format(
+        package_name, service_name, merged_options, package_version))
 
-    # install_package_and_wait silently waits for all marathon deployments to clear.
-    # to give some visibility, install in the following order:
-    # 1. install package
-    shakedown.install_package(
+    # 1. Install package, wait for tasks, wait for marathon deployment
+    retried_shakedown_install(
         package_name,
-        package_version=package_version,
-        options_json=merged_options)
+        package_version,
+        service_name,
+        merged_options,
+        timeout_seconds,
+        expected_running_tasks)
 
-    # 2. wait for expected tasks to come up
-    sdk_utils.out("Waiting for expected tasks to come up...")
-    sdk_tasks.check_running(service_name, running_task_count)
+    # 2. Wait for the scheduler to be idle (as implied by deploy plan completion and suppressed bit)
+    # This should be skipped ONLY when it's known that the scheduler will be stuck in an incomplete state.
+    if wait_for_deployment:
+        # this can take a while, default is 15 minutes. for example with HDFS, we can hit the expected
+        # total task count via FINISHED tasks, without actually completing deployment
+        log.info("Waiting for {}/{} to finish deployment plan...".format(
+            package_name, service_name))
+        sdk_plan.wait_for_completed_deployment(service_name, timeout_seconds)
 
-    # 3. check service health
-    marathon_client = dcos.marathon.create_client()
-    def is_deployment_finished():
-        # TODO(nickbp): upstream fix to shakedown, which currently checks for ANY deployments rather
-        #               than the one we care about
-        deploying_apps = set([])
-        sdk_utils.out("Getting deployments")
-        deployments = marathon_client.get_deployments()
-        sdk_utils.out("Found {} deployments".format(len(deployments)))
-        for deployment in deployments:
-            sdk_utils.out("Deployment: {}".format(deployment))
-            for app in deployment.get('affectedApps', []):
-                sdk_utils.out("Adding {}".format(app))
-                deploying_apps.add(app)
-        sdk_utils.out('Checking that deployment of {} has ended:\n- Deploying apps: {}'.format(service_name, deploying_apps))
-        return not '/{}'.format(service_name) in deploying_apps
-    sdk_utils.out("Waiting for marathon deployment to finish...")
-    sdk_spin.time_wait_noisy(is_deployment_finished)
+        # given the above wait for plan completion, here we just wait up to 5 minutes
+        if shakedown.dcos_version_less_than("1.9"):
+            log.info("Skipping `is_suppressed` check for %s/%s as this is only suppored starting in version 1.9",
+                     package_name, service_name)
+        else:
+            log.info("Waiting for %s/%s to be suppressed...", package_name, service_name)
+            shakedown.wait_for(
+                lambda: sdk_api.is_suppressed(service_name),
+                noisy=True,
+                timeout_seconds=5 * 60)
 
-    # 4. Ensure the framework is suppressed.
-    #
-    # This is only configurable in order to support installs from
-    # Universe during the upgrade_downgrade tests, because currently
-    # the suppression endpoint isn't supported by all frameworks in
-    # Universe.  It can be removed once all frameworks rely on
-    # dcos-commons >= 0.13.
-    if check_suppression:
-        sdk_utils.out("Waiting for framework to be suppressed...")
-        sdk_spin.time_wait_noisy(
-            lambda: sdk_api.is_suppressed(service_name))
-
-    sdk_utils.out('Install done after {}'.format(sdk_spin.pretty_time(time.time() - start)))
+    log.info('Installed {}/{} after {}'.format(
+        package_name, service_name, shakedown.pretty_duration(time.time() - start)))
 
 
-def uninstall(service_name, package_name=None):
+@retry(stop_max_attempt_number=5, wait_fixed=5000, retry_on_exception=lambda e: isinstance(e, dcos.errors.DCOSException))
+def uninstall(service_name,
+              package_name=None,
+              role=None,
+              service_account=None,
+              zk=None):
+    _uninstall(service_name,
+               package_name,
+               role,
+               service_account,
+               zk)
+
+
+def _uninstall(
+        service_name,
+        package_name=None,
+        role=None,
+        service_account=None,
+        zk=None):
     start = time.time()
 
     if package_name is None:
         package_name = service_name
-    sdk_utils.out('Uninstalling/janitoring {}'.format(service_name))
-    try:
-        shakedown.uninstall_package_and_wait(package_name, service_name=service_name)
-    except (dcos.errors.DCOSException, ValueError) as e:
-        sdk_utils.out('Got exception when uninstalling package, ' +
-              'continuing with janitor anyway: {}'.format(e))
 
-    janitor_start = time.time()
+    if shakedown.dcos_version_less_than("1.10"):
+        log.info('Uninstalling/janitoring {}'.format(service_name))
+        try:
+            shakedown.uninstall_package_and_wait(
+                package_name, service_name=service_name)
+        except (dcos.errors.DCOSException, ValueError) as e:
+            log.info('Got exception when uninstalling package, ' +
+                          'continuing with janitor anyway: {}'.format(e))
+            if 'marathon' in str(e):
+                log.info('Detected a probable marathon flake. Raising so retry will trigger.')
+                raise
 
-    janitor_cmd = (
-        'docker run mesosphere/janitor /janitor.py '
-        '-r {svc}-role -p {svc}-principal -z dcos-service-{svc} --auth_token={auth}')
-    shakedown.run_command_on_master(janitor_cmd.format(
-        svc=service_name,
-        auth=shakedown.run_dcos_command('config show core.dcos_acs_token')[0].strip()))
+        janitor_start = time.time()
 
-    finish = time.time()
+        # leading slash removed, other slashes converted to double underscores:
+        deslashed_service_name = service_name.lstrip('/').replace('/', '__')
+        if role is None:
+            role = deslashed_service_name + '-role'
+        if service_account is None:
+            service_account = service_name + '-principal'
+        if zk is None:
+            zk = 'dcos-service-' + deslashed_service_name
+        janitor_cmd = ('docker run mesosphere/janitor /janitor.py '
+                       '-r {role} -p {service_account} -z {zk} --auth_token={auth}')
+        shakedown.run_command_on_master(
+            janitor_cmd.format(
+                role=role,
+                service_account=service_account,
+                zk=zk,
+                auth=shakedown.run_dcos_command(
+                    'config show core.dcos_acs_token')[0].strip()))
 
-    sdk_utils.out('Uninstall done after pkg({}) + janitor({}) = total({})'.format(
-        sdk_spin.pretty_time(janitor_start - start),
-        sdk_spin.pretty_time(finish - janitor_start),
-        sdk_spin.pretty_time(finish - start)))
+        finish = time.time()
+
+        log.info(
+            'Uninstall done after pkg({}) + janitor({}) = total({})'.format(
+                shakedown.pretty_duration(janitor_start - start),
+                shakedown.pretty_duration(finish - janitor_start),
+                shakedown.pretty_duration(finish - start)))
+    else:
+        log.info('Uninstalling {}'.format(service_name))
+        try:
+            shakedown.uninstall_package_and_wait(
+                package_name, service_name=service_name)
+            # service_name may already contain a leading slash:
+            marathon_app_id = '/' + service_name.lstrip('/')
+            log.info('Waiting for no deployments for {}'.format(marathon_app_id))
+            shakedown.deployment_wait(TIMEOUT_SECONDS, marathon_app_id)
+
+            # wait for service to be gone according to marathon
+            def marathon_dropped_service():
+                client = shakedown.marathon.create_client()
+                app_list = client.get_apps()
+                app_ids = [app['id'] for app in app_list]
+                log.info('Marathon apps: {}'.format(app_ids))
+                matching_app_ids = [
+                    app_id for app_id in app_ids if app_id == marathon_app_id
+                ]
+                if len(matching_app_ids) > 1:
+                    log.info('Found multiple apps with id {}'.format(
+                        marathon_app_id))
+                return len(matching_app_ids) == 0
+            log.info('Waiting for no {} Marathon app'.format(marathon_app_id))
+            shakedown.time_wait(marathon_dropped_service, timeout_seconds=TIMEOUT_SECONDS)
+
+        except (dcos.errors.DCOSException, ValueError) as e:
+            log.info(
+                'Got exception when uninstalling package: {}'.format(e))
+            if 'marathon' in str(e):
+                log.info('Detected a probable marathon flake. Raising so retry will trigger.')
+                raise
+        finally:
+            sdk_utils.list_reserved_resources()
 
 
 def get_package_options(additional_options={}):
@@ -108,14 +190,18 @@ def get_package_options(additional_options={}):
     if os.environ.get('SECURITY', '') == 'strict':
         # strict mode requires correct principal and secret to perform install.
         # see also: tools/setup_permissions.sh and tools/create_service_account.sh
-        return _merge_dictionary(additional_options, {
-            'service': { 'principal': 'service-acct', 'secret_name': 'secret' }
+        return _merge_dictionaries(additional_options, {
+            'service': {
+                'service_account': 'service-acct',
+                'secret_name': 'secret',
+                'mesos_api_version': 'V0'
+            }
         })
     else:
         return additional_options
 
 
-def _merge_dictionary(dict1, dict2):
+def _merge_dictionaries(dict1, dict2):
     if (not isinstance(dict2, dict)):
         return dict1
     ret = {}
@@ -123,8 +209,8 @@ def _merge_dictionary(dict1, dict2):
         ret[k] = v
     for k, v in dict2.items():
         if (k in dict1 and isinstance(dict1[k], dict)
-            and isinstance(dict2[k], collections.Mapping)):
-            ret[k] = _merge_dictionary(dict1[k], dict2[k])
+                and isinstance(dict2[k], collections.Mapping)):
+            ret[k] = _merge_dictionaries(dict1[k], dict2[k])
         else:
             ret[k] = dict2[k]
     return ret

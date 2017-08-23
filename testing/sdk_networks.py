@@ -12,7 +12,7 @@ def check_task_network(task_name, expected_network_name="dcos"):
     _task = shakedown.get_task(task_id=task_name, completed=False)
 
     if type(_task) == list or type(_task) == tuple:
-        assert len(_task) == 1, "Found too many tasks matching {}, got {}" \
+        assert len(_task) == 1, "Found too many tasks matching {}, got {}"\
             .format(task_name, _task)
         _task = _task[0]
 
@@ -25,11 +25,11 @@ def check_task_network(task_name, expected_network_name="dcos"):
                         "status:{status}".format(task=task_name, status=status)
                     assert network_info["name"] == expected_network_name, \
                         "Expected network name:{expected} found:{observed}" \
-                            .format(expected=expected_network_name, observed=network_info["name"])
+                        .format(expected=expected_network_name, observed=network_info["name"])
                 else:
                     assert "name" not in network_info, \
                         "Task {task} has network name when it shouldn't has status:{status}" \
-                            .format(task=task_name, status=status)
+                        .format(task=task_name, status=status)
 
 
 def get_and_test_endpoints(endpoint_to_get, package_name, correct_count):
@@ -71,7 +71,7 @@ def get_framework_srv_records(package_name):
     assert ok, "Failed to get srv records. command was {}".format(cmd)
     srvs = json.loads(out)
     framework_srvs = [f for f in srvs["frameworks"] if f["name"] == package_name]
-    assert len(framework_srvs) == 1, "Got too many srv records matching package {}, got {}" \
+    assert len(framework_srvs) == 1, "Got too many srv records matching package {}, got {}"\
         .format(package_name, framework_srvs)
     return framework_srvs[0]
 
@@ -94,11 +94,11 @@ def check_port_names(task_info, expected_port_count, expected_port_names):
     ports_list = task_info["discovery"]["ports"]["ports"]
     assert len(ports_list) == expected_port_count, "Got incorrect number of ports for task {}," \
                                                    "got {} ports, should be {}." \
-        .format(task_info, len(ports_list), expected_port_count)
+                                                   .format(task_info, len(ports_list), expected_port_count)
     for port, expected_name in zip(ports_list, expected_port_names):
         assert "name" in port, "port {} missing name".format(port)
-        assert port["name"] == expected_name, "Port name wrong, should be {} got {}" \
-            .format(expected_name, port["name"])
+        assert port["name"] == expected_name, "Port name wrong, should be {} got {}"\
+                                              .format(expected_name, port["name"])
 
 
 def get_task_srv_records(task_srv_records, prefixes):
