@@ -62,11 +62,6 @@ else
 fi
 
 # configure this session's CLI
-dcos config set core.dcos_url $CLUSTER_URL
-dcos config set core.ssl_verify false
 tools/./dcos_login.py
-
-dcos package repo remove test-confluent-kafka || true
-dcos package repo add --index=0 test-confluent-kafka $STUB_UNIVERSE_URL
 
 PYTHONUNBUFFERED=1 py.test -vv -s -k "sanity" tests/
