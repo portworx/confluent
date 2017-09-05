@@ -1,21 +1,30 @@
 ---
 post_title: Limitations
-menu_order: 50
+menu_order: 70
 post_excerpt: ""
 enterprise: 'no'
 ---
 
-- Shrinking cluster size (number of brokers) is not supported.
+## Configurations
 
+The "disk" configuration value is denominated in MB. We recommend you set the configuration value `log_retention_bytes` to a value smaller than the indicated "disk" configuration. See the Configuring section for instructions for customizing these values.
 
-## Automatic Failed Node Recovery
+### Configuration changes
 
-Nodes are not automatically replaced by the service in the event a system goes down. You can either manually replace pods as described under [Managing](#managing), or build your own ruleset and automation to perform this operation automatically.
+You cannot decrease the number of nodes or change volume requirements after initial deployment.
 
-## Updating Storage Volumes
+## Managing configurations outside of the service
 
-Neither volume type nor volume size requirements can be changed after initial deployment.
+Out-of-band configuration modifications are not supported. The Confluent Kafka service's core responsibility is to deploy and maintain the deployment of a Kafka cluster whose configuration has been specified. In order to do this, the service assumes that it has ownership of broker configuration. If an end-user makes modifications to individual brokers through out-of-band configuration operations, the service will almost certainly override those modifications at a later time. If a broker crashes, it will be restarted with the configuration known to the scheduler, not one modified out-of-band. If a configuration update is initiated, all out-of-band modifications will be overwritten during the rolling update.
 
-## Rack-aware Replication
+## Brokers
 
-Rack awareness within the service is not currently supported, but is planned to be supported with a future release of DC/OS.
+The number of deployable brokers is constrained by two factors. First, brokers have specified required resources, so brokers may not be placed if the DC/OS cluster lacks the requisite resources. Second, the specified "PLACEMENT_STRATEGY" environment variable may affect how many brokers can be created in a Confluent Kafka cluster. By default, the value is "ANY," so brokers are placed anywhere and are only constrained by the resources of the cluster. A second option is "NODE." In this case, only one broker may be placed on a given DC/OS agent.
+
+## Security
+
+The security features introduced in Apache Kafka 0.9 are not supported at this time.
+
+## Virtual networks
+
+When Confluent Kafka is deployed on a virtual network, such as the `dcos` overlay network, the configuration cannot be updated to use the host network.

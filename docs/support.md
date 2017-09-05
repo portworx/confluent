@@ -1,6 +1,6 @@
 ---
 post_title: Support
-menu_order: 60
+menu_order: 100
 post_excerpt: ""
 enterprise: 'no'
 ---
