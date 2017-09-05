@@ -26,3 +26,8 @@ You can also access the logs via the Mesos UI:
 1. Navigate to the correct framework for your needs. The scheduler runs under `marathon` with a task name matching the service name (default `confluent-kafka`). Service pods run under a framework whose name matches the service name (default `confluent-kafka`).
 1. You should see two lists of tasks. `Active Tasks` are tasks currently running and `Completed Tasks` are tasks that have exited. Click the `Sandbox` link for the task you wish to examine.
 1. The `Sandbox` view will list files named `stdout` and `stderr`. Click the file names to view the files in the browser, or click `Download` to download them to your system for local examination. Note that very old tasks will have their Sandbox automatically deleted to limit disk space usage.
+
+# Extending the Kill Grace Period
+
+If the Kafka brokers are not completing the clean shutdown within the configured
+`brokers.kill_grace_period` (Kill Grace Period), extend the Kill Grace Period, see Managing - Extend Kill Grace Period.

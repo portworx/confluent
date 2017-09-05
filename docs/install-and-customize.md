@@ -107,3 +107,26 @@ hostname:LIKE:10.0.0.159|10.0.1.202|10.0.3.3
 You must include spare capacity in this list, so that if one of the whitelisted systems goes down, there is still enough room to repair your service without that system.
 
 For an example of updating placement constraints, see the Managing section.
+
+### Kill Grace Period
+
+The kill grace period is the number of seconds each broker has to cleanly shut
+down in response to SIGTERM. If a broker exceeds this time, it will be killed.
+Use the `brokers.kill_grace_period` configuration option to set a kill grace period.
+
+The graceful shutdown feature is especially important for large-scale deployments.
+Use the graceful shutdown configuraiton option to provide the broker sufficient
+time during shutdown. This ensures that all in-memory data is flushed to disk and
+all state is replicated. When a broker has sufficient time to shut down, the
+subsequent restart will be nearly as fast as the first startup. This is a large
+contributor to the Kafka service's high availability.
+
+You can observe the graceful shutdown feature via the following log entries:
+
+1. The task launch log line contains `kill_policy { grace_period { nanoseconds: 30000000000 } }`.
+1. The task graceful shutdown log line contains SIGTERM as well as the grace time granted.
+1. The underlying Kafka logging of shutdown operations includes a stream of subsystem shutdowns prior to the overarching system
+   shutdown indicated by the entry `[Kafka Server 1], shut down completed (kafka.server.KafkaServer)`.
+1. The presence (or not) of a SIGKILL log line indicating that the underlying Kafka broker did not shutdown cleanly within the
+   allotted grace period.
+1. The task status update marked by `TASK_KILLED`, indicating the end of the shutdown activity.
