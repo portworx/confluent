@@ -1,6 +1,6 @@
 ---
 post_title: Supported Versions
-menu_order: 70
+menu_order: 80
 post_excerpt: ""
 enterprise: 'no'
 ---

@@ -1,31 +1,78 @@
 ---
 post_title: Troubleshooting
-menu_order: 50
-post_excerpt: ""
+menu_order: 60
 enterprise: 'no'
 ---
 
-# Accessing Logs
+The Confluent Kafka service will be listed as "Unhealthy" when it detects any underreplicated partitions. This error condition usually indicates a malfunctioning broker. Use the `dcos beta-confluent-kafka topic under_replicated_partitions` and `dcos beta-confluent-kafka topic describe <topic-name>` commands to find the problem broker and determine what actions are required.
 
-You can find logs for the scheduler and all service pods on the the DC/OS web interface.
+Possible repair actions include `dcos beta-confluent-kafka broker restart <broker-id>` and `dcos beta-confluent-kafka broker replace <broker-id>`. The replace operation is destructive and will irrevocably lose all data associated with the broker. The restart operation is not destructive and indicates an attempt to restart a broker process.
 
-- Scheduler logs are useful for determining why a pod isn't being launched (this is under the purview of the scheduler).
-- Pod logs are useful for examining problems in the service itself.
+# Configuration Update Errors
 
-In all cases, logs are generally piped to files named `stdout` and/or `stderr`.
+The bolded entries below indicate the necessary changes needed to create a valid configuration:
 
-To view logs for a given pod, perform the following steps:
-1. Visit `<dcos-url>` to view the DC/OS Dashboard.
-1. Navigate to `Services` and click the service to be examined (default `confluent-kafka`).
-1. In the list of tasks for the service, click the task to be examined.
-1. In the task details, click the `Logs` tab to go into the log viewer. By default you will see `stdout`, but `stderr` is also useful. Use the pull-down in the upper right to select the file to be examined.
+<pre>
+$ curl -H "Authorization: token=$AUTH_TOKEN" "$DCOS_URI/service/confluent-kafka/v1/plan"
+GET /service/confluent-kafka/v1/plan HTTP/1.1
 
-You can also access the logs via the Mesos UI:
-1. Visit `<dcos-url>/mesos` to view the Mesos UI.
-1. Click the `Frameworks` tab in the upper left to get a list of services running in the cluster.
-1. Navigate to the correct framework for your needs. The scheduler runs under `marathon` with a task name matching the service name (default `confluent-kafka`). Service pods run under a framework whose name matches the service name (default `confluent-kafka`).
-1. You should see two lists of tasks. `Active Tasks` are tasks currently running and `Completed Tasks` are tasks that have exited. Click the `Sandbox` link for the task you wish to examine.
-1. The `Sandbox` view will list files named `stdout` and `stderr`. Click the file names to view the files in the browser, or click `Download` to download them to your system for local examination. Note that very old tasks will have their Sandbox automatically deleted to limit disk space usage.
+{
+    "phases": [
+        {
+             "id": "c26bec40-3290-4501-b3da-945d0abef55f",
+            "name": "Reconciliation",
+            "steps": [
+                {
+                    "id": "e56d2e4a-e05b-42ad-b4a0-d74b68d206af",
+                    "message": "Reconciliation complete",
+                    "name": "Reconciliation",
+                    "status": "COMPLETE"
+                },
+                "status": "COMPLETE"
+            ]
+        },
+        {
+
+            "id": "226a780e-132f-4fea-b584-7712b07cf357",
+            "name": "Update to: 72cecf77-dbc5-4ae6-8f91-c88702b9a6a8",
+            "steps": [
+                {
+                    "id": "d4e72ee8-4608-423a-9566-1632ff0ab211",
+                    "message": "Broker-0 is COMPLETE",
+                    "name": "broker-0",
+                    "status": "COMPLETE"
+                },
+                {
+                    "id": "3ea30deb-9660-42f1-ad23-bd418d718999",
+                    "message": "Broker-1 is COMPLETE",
+                    "name": "broker-1",
+                    "status": "COMPLETE"
+                },
+                {
+                    "id": "4da21440-de73-4772-9c85-877f2677e62a",
+                    "message": "Broker-2 is COMPLETE",
+                    "name": "broker-2",
+                    "status": "COMPLETE"
+                }
+            ],
+            "status": "COMPLETE"
+        }
+    ],
+
+    <b>"errors": [
+        "Validation error on field \"BROKER_COUNT\": Decreasing this value (from 3 to 2) is not supported."
+    ],</b>
+    <b>"status": "Error"</b>
+}
+</pre>
+
+# Replacing a Permanently Failed Server
+
+If a machine has permanently failed, manual intervention is required to replace the broker or brokers that resided on that machine. Because DC/OS Kafka uses persistent volumes, the service continuously attempts to replace brokers where their data has been persisted. In the case where a machine has permanently failed, use the Kafka CLI to replace the brokers.
+
+In the example below, the broker with id `0` will be replaced on new machine as long as cluster resources are sufficient to satisfy the service’s placement constraints and resource requirements.
+
+    $ dcos confluent-kafka broker replace 0
 
 # Extending the Kill Grace Period
 
