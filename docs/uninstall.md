@@ -1,6 +1,6 @@
 ---
 post_title: Uninstalling
-menu_order: 50
+menu_order: 30
 post_excerpt: ""
 enterprise: 'no'
 ---

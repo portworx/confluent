@@ -1,6 +1,6 @@
 ---
 post_title: Disaster Recovery
-menu_order: 50
+menu_order: 80
 post_excerpt: ""
 enterprise: 'no'
 ---
