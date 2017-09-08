@@ -5,28 +5,16 @@ post_excerpt: ""
 enterprise: 'no'
 ---
 
-## Version 1.2.4-3.3.0e-beta
+# Version 2.0.0-3.3.0e
 
-### Improvements
-- Upgrade to Confluent 3.3.0
-- Many common configuration options now align with other DC/OS packages
-- Support for Kafka's graceful shutdown.
-- Default broker protocol and log message formats now default to 0.11.0.0.
-- Upgrade to [dcos-commons 0.30.0](https://github.com/mesosphere/dcos-commons/releases/tag/0.30.0).
+## Improvements
+- Based on the latest stable release of the dcos-commons SDK, which provides numerous benefits:
+  - Integration with DC/OS features such as virtual networking and integration with DC/OS access controls.
+  - Orchestrated software and configuration update, enforcement of version upgrade paths, and ability to pause/resume updates.
+  - Placement constraints for pods.
+  - Uniform user experience across a variety of services.
+- Update to version 3.3.0 of Confluent Kafka.
+- Graceful shutdown for brokers.
 
-### Bug Fixes
-- Numerous fixes and enhancements to service reliability.
-
-## Version 1.2.3-3.2.2e-beta
-
-### New Features
-- Installation in folders is supported
-- Use of a CNI network is supported
-
-### Improvements
-- Upgrade to [dcos-commons 0.20.1](https://github.com/mesosphere/dcos-commons/releases/tag/0.20.1)
-- Default user is now `nobody`
-- Allow configuration of scheduler log level
-- Readiness check has been added
-- Custom ZK configuration is supported
-- Statsd is enabled
+## Breaking Changes
+- This is a major release.  You cannot upgrade to 2.0.0-3.3.0e from a 1.0.x version of the package.  To upgrade, you must perform a fresh install and replicate data across clusters.
