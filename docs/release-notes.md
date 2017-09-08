@@ -1,6 +1,6 @@
 ---
 post_title: Release Notes
-menu_order: 110
+menu_order: 120
 post_excerpt: ""
 enterprise: 'no'
 ---

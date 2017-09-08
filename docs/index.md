@@ -1,6 +1,6 @@
 ---
 post_title: Beta Confluent Kafka v
-menu_order: 0
+menu_order: 10
 post_excerpt: ""
 enterprise: 'no'
 ---

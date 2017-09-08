@@ -1,6 +1,6 @@
 ---
 post_title: Upgrades and Downgrades
-menu_order: 90
+menu_order: 130
 post_excerpt: ""
 enterprise: 'no'
 ---

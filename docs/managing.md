@@ -1,6 +1,6 @@
 ---
 post_title: Managing
-menu_order: 40
+menu_order: 60
 enterprise: 'no'
 ---
 # Updating Configuration
