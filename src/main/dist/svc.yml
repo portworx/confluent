@@ -48,6 +48,7 @@ pods:
           server-properties:
             template: "{{CONFIG_TEMPLATE_PATH}}/server.properties.mustache"
             dest: "{{KAFKA_VERSION_PATH}}/etc/kafka/server.properties"
+        kill-grace-period: {{BROKER_KILL_GRACE_PERIOD}}
         readiness-check:
           cmd: |
             # since the server is just started, the starting and started log lines

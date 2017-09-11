@@ -3,6 +3,7 @@ import sdk_cmd
 
 
 SERVICE_NAME = 'confluent-kafka'
+PACKAGE_NAME = 'confluent-kafka'
 DEFAULT_BROKER_COUNT = 3
 DEFAULT_POD_TYPE = 'kafka'
 DEFAULT_TASK_NAME = 'broker'
