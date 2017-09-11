@@ -36,7 +36,7 @@ class HTTPPublisher(object):
         self._pkg_version = package_version
         self._input_dir_path = input_dir_path
 
-        self._http_dir = os.environ.get('HTTP_DIR', '/tmp/dcos-http-{}/'.format(self._pkg_name))
+        self._http_dir = os.environ.get('HTTP_DIR', '/tmp/dcos-http-{}/'.format(package_name))
         self._http_host = os.environ.get('HTTP_HOST', '172.17.0.1')
         self._http_port = int(os.environ.get('HTTP_PORT', '0'))
 
@@ -97,9 +97,7 @@ class HTTPPublisher(object):
     def build(self, http_url_root):
         '''copies artifacts and a new stub universe into the http root directory'''
         try:
-            universe_path = universe_builder.UniversePackageBuilder(
-                self._pkg_name, self._pkg_version,
-                self._input_dir_path, http_url_root, self._artifact_paths).build_zip()
+            universe_path = self._package_builder.build_package()
         except Exception as e:
             err = 'Failed to create stub universe: {}'.format(str(e))
             self._github_updater.update('error', err)
@@ -149,31 +147,47 @@ class HTTPPublisher(object):
         else:
             port = self._http_port
 
+        http_url_root = 'http://{}:{}'.format(self._http_host, port)
+
+        self._package_builder = universe_builder.UniversePackageBuilder(
+            self._pkg_name, self._pkg_version,
+            self._input_dir_path, http_url_root, self._artifact_paths)
+
         # hack: write httpd script then run it directly
-        httpd_py_content = '''#!/usr/bin/python
-import os, SimpleHTTPServer, SocketServer
+        httpd_py_content = '''#!/usr/bin/env python3
+import os, socketserver
+from http.server import SimpleHTTPRequestHandler
 rootdir = '{}'
 host = '{}'
 port = {}
+
+class CustomTypeHandler(SimpleHTTPRequestHandler):
+    def __init__(self, req, client_addr, server):
+        SimpleHTTPRequestHandler.__init__(self, req, client_addr, server)
+    def guess_type(self, path):
+        if path.endswith('.json'):
+            return 'application/vnd.dcos.universe.repo+json;charset=utf-8'
+        return SimpleHTTPRequestHandler.guess_type(self, path)
+
 os.chdir(rootdir)
-httpd = SocketServer.TCPServer((host, port), SimpleHTTPServer.SimpleHTTPRequestHandler)
+httpd = socketserver.TCPServer((host, port), CustomTypeHandler)
 print('Serving %s at http://%s:%s' % (rootdir, host, port))
 httpd.serve_forever()
 '''.format(self._http_dir, self._http_host, port)
-        httpd_py_path = os.path.join(self._http_dir, procname)
 
+        httpd_py_path = os.path.join(self._http_dir, procname)
         if not os.path.isdir(self._http_dir):
             os.makedirs(self._http_dir)
-        httpd_py_file = file(httpd_py_path, 'w+')
+        httpd_py_file = open(httpd_py_path, 'w+')
         httpd_py_file.write(httpd_py_content)
         httpd_py_file.flush()
         httpd_py_file.close()
 
-        os.chmod(httpd_py_path, 0744)
+        os.chmod(httpd_py_path, 0o744)
         logger.info('Launching HTTPD: {}'.format(httpd_py_path))
         subprocess.Popen([httpd_py_path, "2&1>", "/dev/null"])
 
-        return 'http://{}:{}'.format(self._http_host, port)
+        return http_url_root
 
     def add_repo_to_cli(self, repo_url):
         try:
@@ -198,9 +212,9 @@ httpd.serve_forever()
 
 
 def print_help(argv):
-    logger.info('Syntax: {} <package-name> <confluent-kafka-package-dir> [artifact files ...]'.format(argv[0]))
+    logger.info('Syntax: {} <package-name> <template-package-dir> [artifact files ...]'.format(argv[0]))
     logger.info('  Example: $ {} kafka /path/to/universe/jsons/ /path/to/artifact1.zip /path/to/artifact2.zip /path/to/artifact3.zip'.format(argv[0]))
-    logger.info('In addition, environment variables named \'CONFLUENT_KAFKA_SOME_PARAMETER\' will be inserted against the provided package confluent-kafka (with params of the form \'{{some-parameter}}\')')
+    logger.info('In addition, environment variables named \'TEMPLATE_SOME_PARAMETER\' will be inserted against the provided package template (with params of the form \'{{some-parameter}}\')')
 
 
 def main(argv):
@@ -209,15 +223,16 @@ def main(argv):
         return 1
     # the package name:
     package_name = argv[1]
-    # local path where the package confluent-kafka is located:
+    # local path where the package template is located:
     package_dir_path = argv[2].rstrip('/')
     # artifact paths (to copy along with stub universe)
     artifact_paths = argv[3:]
     logger.info('''###
 Package:         {}
 Template path:   {}
-Artifacts:       {}
-###'''.format(package_name, package_dir_path, ', '.join(artifact_paths)))
+Artifacts:
+{}
+###'''.format(package_name, package_dir_path, '\n'.join(['- {}'.format(path) for path in artifact_paths])))
 
     publisher = HTTPPublisher(package_name, package_dir_path, artifact_paths)
     http_url_root = publisher.launch_http()
@@ -226,8 +241,10 @@ Artifacts:       {}
     logger.info('---')
     logger.info('(Re)install your package using the following commands:')
     logger.info('dcos package uninstall {}'.format(package_name))
+    logger.info('\n- - - -\nFor 1.9 or older clusters only')
     logger.info('dcos node ssh --master-proxy --leader ' +
                 '"docker run mesosphere/janitor /janitor.py -r {0}-role -p {0}-principal -z dcos-service-{0}"'.format(package_name))
+    logger.info('- - - -\n')
     if not repo_added:
         logger.info('dcos package repo remove {}-local'.format(package_name))
         logger.info('dcos package repo add --index=0 {}-local {}'.format(package_name, universe_url))
