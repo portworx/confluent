@@ -32,6 +32,9 @@ def list_reserved_resources():
 def get_foldered_name(service_name):
     # DCOS 1.9 & earlier don't support "foldered", service names aka marathon
     # group names
+    log.info('TODO: Remove this once confluent-kafka supports foldered service names')
+    return service_name
+
     if dcos_version_less_than('1.10'):
         return service_name
     return '/test/integration/' + service_name
