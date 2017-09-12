@@ -87,7 +87,8 @@ def test_custom_zookeeper():
 
     # create a topic against the default zk:
     sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic create {}'.format(config.DEFAULT_TOPIC_NAME), json=True)
-    assert sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic list', json=True) == [config.DEFAULT_TOPIC_NAME]
+    # TODO: There should be a better way of specifying the topics
+    assert sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic list', json=True) == [config.DEFAULT_TOPIC_NAME, "_confluent-metrics"]
 
     marathon_config = sdk_marathon.get_config(foldered_name)
     # should be using default path when this envvar is empty/unset:
@@ -108,7 +109,8 @@ def test_custom_zookeeper():
     assert zookeeper.rstrip('\n') == zk_path
 
     # topic created earlier against default zk should no longer be present:
-    assert sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic list', json=True) == []
+    # TODO: There should be a better way of specifying topics.
+    assert sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic list', json=True) == ["_confluent-metrics"]
 
     # tests from here continue with the custom ZK path...
 

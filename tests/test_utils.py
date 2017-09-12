@@ -52,7 +52,8 @@ def create_topic(service_name=config.SERVICE_NAME):
     assert ('Created topic "%s".\n' % EPHEMERAL_TOPIC_NAME in create_info['message'])
     assert ("topics with a period ('.') or underscore ('_') could collide." in create_info['message'])
     topic_list_info = sdk_cmd.svc_cli(config.PACKAGE_NAME, service_name, 'topic list', json=True)
-    assert topic_list_info == [EPHEMERAL_TOPIC_NAME]
+    # TODO: There should be a more maintainable way to specify this
+    assert topic_list_info == [EPHEMERAL_TOPIC_NAME, "_confluent-metrics"]
 
     topic_info = sdk_cmd.svc_cli(config.PACKAGE_NAME, service_name, 'topic describe {}'.format(EPHEMERAL_TOPIC_NAME), json=True)
     assert len(topic_info) == 1
