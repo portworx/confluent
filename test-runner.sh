@@ -45,8 +45,10 @@ if [ -n "$PYTEST_ARGS" ]; then
     pytest_args+=("$PYTEST_ARGS")
 fi
 
-eval "$(ssh-agent -s)"
-ssh-add /ssh/key
+if [ -f /ssh/key ]; then
+    eval "$(ssh-agent -s)"
+    ssh-add /ssh/key
+fi
 
 for framework in $FRAMEWORK_LIST; do
     echo "STARTING: $framework"
