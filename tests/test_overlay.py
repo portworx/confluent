@@ -78,7 +78,7 @@ def test_pod_replace_on_overlay():
 @pytest.mark.overlay
 @sdk_utils.dcos_1_9_or_higher
 def test_topic_create_overlay():
-    test_utils.create_topic(expect_metrics_topic=False)
+    test_utils.create_topic()
 
 
 @pytest.mark.sanity

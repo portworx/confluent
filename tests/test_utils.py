@@ -7,7 +7,6 @@ from tests import config
 
 log = logging.getLogger(__name__)
 
-DEFAULT_TOPIC_NAME = 'topic1'
 EPHEMERAL_TOPIC_NAME = 'topic_2'
 
 
@@ -46,16 +45,14 @@ def replace_broker_pod(service_name=config.SERVICE_NAME):
     broker_count_check(config.DEFAULT_BROKER_COUNT, service_name=service_name)
 
 
-def create_topic(service_name=config.SERVICE_NAME, expect_metrics_topic=True):
+def create_topic(service_name=config.SERVICE_NAME):
     create_info = sdk_cmd.svc_cli(config.PACKAGE_NAME, service_name, 'topic create {}'.format(EPHEMERAL_TOPIC_NAME), json=True)
     log.info(create_info)
     assert ('Created topic "%s".\n' % EPHEMERAL_TOPIC_NAME in create_info['message'])
     assert ("topics with a period ('.') or underscore ('_') could collide." in create_info['message'])
     topic_list_info = sdk_cmd.svc_cli(config.PACKAGE_NAME, service_name, 'topic list', json=True)
     # TODO: There should be a more maintainable way to specify this
-    expected_topic_list = [EPHEMERAL_TOPIC_NAME, ]
-    if expect_metrics_topic:
-        expected_topic_list.append("_confluent-metrics")
+    expected_topic_list = [EPHEMERAL_TOPIC_NAME, config.KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC, ]
     assert topic_list_info == expected_topic_list
 
     topic_info = sdk_cmd.svc_cli(config.PACKAGE_NAME, service_name, 'topic describe {}'.format(EPHEMERAL_TOPIC_NAME), json=True)

@@ -16,8 +16,6 @@ import sdk_utils
 import shakedown
 from tests import config, test_utils
 
-EPHEMERAL_TOPIC_NAME = 'topic_2'
-
 
 @pytest.fixture(scope='module', autouse=True)
 def configure_package(configure_security):
@@ -87,8 +85,10 @@ def test_custom_zookeeper():
 
     # create a topic against the default zk:
     sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic create {}'.format(config.DEFAULT_TOPIC_NAME), json=True)
+    topic_list_info = sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic list', json=True)
     # TODO: There should be a better way of specifying the topics
-    assert sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic list', json=True) == [config.DEFAULT_TOPIC_NAME, "_confluent-metrics"]
+    expected_topic_list = [config.DEFAULT_TOPIC_NAME, config.KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC, ]
+    assert topic_list_info == expected_topic_list
 
     marathon_config = sdk_marathon.get_config(foldered_name)
     # should be using default path when this envvar is empty/unset:
@@ -109,8 +109,11 @@ def test_custom_zookeeper():
     assert zookeeper.rstrip('\n') == zk_path
 
     # topic created earlier against default zk should no longer be present:
+    topic_list_info = sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic list', json=True)
+    # TODO: There should be a better way of specifying the topics
+    expected_topic_list = [config.KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC, ]
     # TODO: There should be a better way of specifying topics.
-    assert sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic list', json=True) == ["_confluent-metrics"]
+    assert topic_list_info == expected_topic_list
 
     # tests from here continue with the custom ZK path...
 
