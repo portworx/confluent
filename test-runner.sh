@@ -4,7 +4,7 @@
 # (Or all frameworks depending on arguments.) Expected to be called by test.sh
 
 # Exit immediately on errors
-set -e
+set -e -x
 
 REPO_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -35,6 +35,10 @@ if [ -n "$PYTEST_M" ]; then
     pytest_args+=(-m "$PYTEST_M")
 fi
 
+if [ -n "$PYTEST_ARGS" ]; then
+    pytest_args+=("$PYTEST_ARGS")
+fi
+
 eval "$(ssh-agent -s)"
 ssh-add /ssh/key
 
@@ -62,12 +66,42 @@ for framework in $FRAMEWORK_LIST; do
         echo "Using provided STUB_UNIVERSE_URL: $STUB_UNIVERSE_URL"
     fi
 
+    if [ -z "$CLUSTER_URL" ]; then
+
+        echo "No DC/OS cluster specified. Attempting to create one now"
+        dcos-launch create -c /build/config.yaml
+
+        # enable the trap to ensure cleanup
+        trap cleanup ERR
+
+        dcos-launch wait
+
+        # configure the dcos-cli/shakedown backend
+        export CLUSTER_URL=https://`dcos-launch describe | jq -r .masters[0].public_ip`
+    fi
+
     echo "Configuring dcoscli for cluster: $CLUSTER_URL"
+    echo "\tDCOS_ENTERPRISE=$DCOS_ENTERPRISE"
     /build/tools/dcos_login.py
+
+    if [ `cat cluster_info.json | jq .key_helper` == 'true' ]; then
+        cat cluster_info.json | jq -r .ssh_private_key > /root/.ssh/id_rsa
+        chmod 600 /root/.ssh/id_rsa
+    fi
 
     echo "Starting test for $framework at "`date`
     PYTHONUNBUFFERED=1 py.test -vv -s "${pytest_args[@]}" ${FRAMEWORK_DIR}/tests
+    exit_code=$?
     echo "Finished test for $framework at "`date`
+
+    set +e
+    dcos-launch delete
+
+    if [ "$FRAMEWORK" == "all" ]; then
+        unset CLUSTER_URL
+    fi
 done
 
 echo "Finished integration tests at "`date`
+
+exit $exit_code
