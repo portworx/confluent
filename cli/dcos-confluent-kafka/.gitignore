@@ -1,3 +1,5 @@
 dcos-confluent-kafka*
+dcos-service-cli*
 *.whl
 native-*
+.native-*
