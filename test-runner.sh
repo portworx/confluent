@@ -84,6 +84,7 @@ for framework in $FRAMEWORK_LIST; do
 
         # configure the dcos-cli/shakedown backend
         export CLUSTER_URL=https://`dcos-launch describe | jq -r .masters[0].public_ip`
+        CLUSTER_WAS_CREATED=True
     fi
 
     echo "Configuring dcoscli for cluster: $CLUSTER_URL"
@@ -101,9 +102,8 @@ for framework in $FRAMEWORK_LIST; do
     echo "Finished test for $framework at "`date`
 
     set +e
-    dcos-launch delete
-
-    if [ "$FRAMEWORK" == "all" ]; then
+    if [ -n ${CLUSTER_WAS_CREATED:-} ]; then
+        dcos-launch delete
         unset CLUSTER_URL
     fi
 done
