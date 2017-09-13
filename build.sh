@@ -6,8 +6,10 @@ BUILD_DIR=$FRAMEWORK_DIR/build/distributions
 
 BOOTSTRAP_DIR=disable \
 EXECUTOR_DIR=disable \
-$FRAMEWORK_DIR/tools/build_framework.sh \
-    confluent-kafka \
-    $FRAMEWORK_DIR \
-    --artifact "$BUILD_DIR/confluent-kafka-scheduler.zip" \
-    $@
+TEMPLATE_DOCUMENTATION_PATH="https://www.confluent.io/whitepaper/deploying-confluent-platform-with-mesosphere" \
+TEMPLATE_ISSUES_PATH="https://groups.google.com/forum/#!forum/confluent-platform" \
+    $FRAMEWORK_DIR/tools/build_framework.sh \
+        confluent-kafka \
+        $FRAMEWORK_DIR \
+        --artifact "$BUILD_DIR/confluent-kafka-scheduler.zip" \
+        $@
