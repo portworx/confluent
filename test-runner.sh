@@ -6,6 +6,12 @@
 # Exit immediately on errors
 set -e -x
 
+# Remove the DC/OS cluster
+cleanup() {
+    dcos-launch delete
+}
+
+
 REPO_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ "$FRAMEWORK" = "all" ]; then
