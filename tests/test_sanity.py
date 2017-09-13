@@ -84,11 +84,7 @@ def test_custom_zookeeper():
     broker_ids = sdk_tasks.get_task_ids(foldered_name, '{}-'.format(config.DEFAULT_POD_TYPE))
 
     # create a topic against the default zk:
-    sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic create {}'.format(config.DEFAULT_TOPIC_NAME), json=True)
-    topic_list_info = sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic list', json=True)
-    # TODO: There should be a better way of specifying the topics
-    expected_topic_list = [config.DEFAULT_TOPIC_NAME, config.KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC, ]
-    assert topic_list_info == expected_topic_list
+    test_utils.create_topic(config.DEFAULT_TOPIC_NAME, service_name=foldered_name)
 
     marathon_config = sdk_marathon.get_config(foldered_name)
     # should be using default path when this envvar is empty/unset:
@@ -112,7 +108,6 @@ def test_custom_zookeeper():
     topic_list_info = sdk_cmd.svc_cli(config.PACKAGE_NAME, foldered_name, 'topic list', json=True)
     # TODO: There should be a better way of specifying the topics
     expected_topic_list = [config.KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC, ]
-    # TODO: There should be a better way of specifying topics.
     assert topic_list_info == expected_topic_list
 
     # tests from here continue with the custom ZK path...
@@ -164,13 +159,13 @@ def test_pod_replace():
 @pytest.mark.smoke
 @pytest.mark.sanity
 def test_topic_create():
-    test_utils.create_topic(sdk_utils.get_foldered_name(config.SERVICE_NAME))
+    test_utils.create_topic(config.EPHEMERAL_TOPIC_NAME, sdk_utils.get_foldered_name(config.SERVICE_NAME))
 
 
 @pytest.mark.smoke
 @pytest.mark.sanity
 def test_topic_delete():
-    test_utils.delete_topic(sdk_utils.get_foldered_name(config.SERVICE_NAME))
+    test_utils.delete_topic(config.EPHEMERAL_TOPIC_NAME, sdk_utils.get_foldered_name(config.SERVICE_NAME))
 
 
 @pytest.mark.sanity

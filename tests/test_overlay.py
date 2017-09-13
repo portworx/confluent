@@ -78,11 +78,11 @@ def test_pod_replace_on_overlay():
 @pytest.mark.overlay
 @sdk_utils.dcos_1_9_or_higher
 def test_topic_create_overlay():
-    test_utils.create_topic()
+    test_utils.create_topic(config.EPHEMERAL_TOPIC_NAME)
 
 
 @pytest.mark.sanity
 @pytest.mark.overlay
 @sdk_utils.dcos_1_9_or_higher
 def test_topic_delete_overlay():
-    test_utils.delete_topic()
+    test_utils.delete_topic(config.EPHEMERAL_TOPIC_NAME)
