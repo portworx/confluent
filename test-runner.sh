@@ -11,6 +11,11 @@ cleanup() {
     dcos-launch delete
 }
 
+# Export the required environment variables:
+export DCOS_ENTERPRISE
+export PYTHONUNBUFFERED=1
+export SECURITY
+
 
 REPO_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -99,7 +104,7 @@ for framework in $FRAMEWORK_LIST; do
     fi
 
     echo "Starting test for $framework at "`date`
-    PYTHONUNBUFFERED=1 py.test -vv -s "${pytest_args[@]}" ${FRAMEWORK_DIR}/tests
+    py.test -vv -s "${pytest_args[@]}" ${FRAMEWORK_DIR}/tests
     exit_code=$?
     echo "Finished test for $framework at "`date`
 
