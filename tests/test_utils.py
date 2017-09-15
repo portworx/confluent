@@ -72,3 +72,10 @@ def delete_topic(topic_name, service_name=config.SERVICE_NAME):
     topic_info = sdk_cmd.svc_cli(config.PACKAGE_NAME, service_name, 'topic describe {}'.format(topic_name), json=True)
     assert len(topic_info) == 1
     assert len(topic_info['partitions']) == config.DEFAULT_PARTITION_COUNT
+
+
+def topic_lists_are_equal_without_automatic_topics(expected, actual):
+    """Check for equality in topic lists after filtering topics that start with
+    an underscore."""
+    filtered_actual = filter(lambda x: not x.startswith('_'), actual)
+    return expected == filtered_actual
