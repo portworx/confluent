@@ -19,10 +19,11 @@ EXPECTED_KAFKA_STARTUP_SECONDS = os.environ.get('KAFKA_EXPECTED_STARTUP', 30)
 EXPECTED_DCOS_STARTUP_SECONDS = os.environ.get('DCOS_EXPECTED_STARTUP', 30)
 STARTUP_POLL_DELAY_SECONDS = os.environ.get('STARTUP_LOG_POLL_DELAY', 2)
 
+
 def setup_module(module):
     options = {
         "brokers": {
-            "kill_grace_period": BROKERS_KILL_GRACE_PERIOD
+            "kill_grace_period": BROKER_KILL_GRACE_PERIOD
         }
     }
 
@@ -40,7 +41,6 @@ def teardown_module(module):
     sdk_install.uninstall(config.PACKAGE_NAME, config.SERVICE_NAME)
 
 
-@pytest.mark.paegun
 @pytest.mark.availability
 @pytest.mark.soak_availability
 @sdk_utils.dcos_1_9_or_higher
@@ -70,7 +70,7 @@ def test_service_startup_rapid():
 
     starting_fallback_time = datetime.datetime.now()
 
-    sdk_tasks.check_tasks_updated(config.SERVICE_NAME, '{}-'.format(config.DEFAULT_POD_TYPE), [ broker_task_id_0 ])
+    sdk_tasks.check_tasks_updated(config.SERVICE_NAME, '{}-'.format(config.DEFAULT_POD_TYPE), [broker_task_id_0, ])
     sdk_tasks.check_running(config.SERVICE_NAME, config.DEFAULT_BROKER_COUNT)
 
     broker_task_id_1 = sdk_tasks.get_task_ids(config.SERVICE_NAME, task_short_name)[0]
