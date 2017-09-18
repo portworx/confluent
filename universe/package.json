@@ -23,6 +23,6 @@
     "confluent"
   ],
   "version": "{{package-version}}",
-  "upgradesFrom": ["2.0.0-3.3.0e"],
-  "downgradesTo": ["2.0.0-3.3.0e"]
+  "upgradesFrom": ["{{upgrades-from}}"],
+  "downgradesTo": ["{{downgrades-to}}"]
 }
