@@ -1,9 +1,16 @@
+'''
+************************************************************************
+FOR THE TIME BEING WHATEVER MODIFICATIONS ARE APPLIED TO THIS FILE
+SHOULD ALSO BE APPLIED TO sdk_security IN ANY OTHER PARTNER REPOS
+************************************************************************
+'''
 import logging
 import os
 from typing import List, Tuple
 
 import requests
 import shakedown
+import sdk_cmd
 
 log = logging.getLogger(__name__)
 
@@ -37,10 +44,8 @@ def revoke(dcosurl: str, headers: dict, user: str, acl: str, description: str, a
 
 
 def get_dcos_credentials() -> Tuple[str, dict]:
-    dcosurl, err, rc = shakedown.run_dcos_command('config show core.dcos_url')
-    assert not rc, "Cannot get core.dcos_url: {}".format(err)
-    token, err, rc = shakedown.run_dcos_command('config show core.dcos_acs_token')
-    assert not rc, "Cannot get dcos_acs_token: {}".format(err)
+    dcosurl = sdk_cmd.run_cli('config show core.dcos_url', print_output=False)
+    token = sdk_cmd.run_cli('config show core.dcos_acs_token', print_output=False)
     headers = {
         'Content-Type': 'application/json',
         'Authorization': 'token={}'.format(token.strip()),
@@ -128,63 +133,53 @@ def grant_permissions(linux_user: str, role_name: str, service_account_name: str
 
 def revoke_permissions(linux_user: str, role_name: str, service_account_name: str) -> None:
     dcosurl, headers = get_dcos_credentials()
-    # log.info("Revoking permissions to {account}".format(account=service_account_name))
+    # log.info("Revoking permissions to {account}".format(account=service_account_nae))
     permissions = get_permissions(service_account_name, role_name, linux_user)
     for permission in permissions:
         revoke(dcosurl, headers, **permission)
     # log.info("Permission cleanup completed for {account}".format(account=service_account_name))
 
 
-def create_service_account(service_account_name: str, secret_name: str) -> None:
+def create_service_account(service_account_name: str, service_account_secret: str) -> None:
     log.info('Creating service account for account={account} secret={secret}'.format(
         account=service_account_name,
-        secret=secret_name))
+        secret=service_account_secret))
 
     log.info('Install cli necessary for security')
-    out, err, rc = shakedown.run_dcos_command('package install dcos-enterprise-cli --package-version=1.0.7')
-    assert not rc, 'Failed to install dcos-enterprise cli extension: {err}'.format(err=err)
+    sdk_cmd.run_cli('package install dcos-enterprise-cli --yes')
+
+    log.info('Remove any existing service account and/or secret')
+    delete_service_account(service_account_name, service_account_secret)
 
     log.info('Create keypair')
-    out, err, rc = shakedown.run_dcos_command('security org service-accounts keypair private-key.pem public-key.pem')
-    assert not rc, 'Failed to create keypair for testing service account: {err}'.format(err=err)
+    sdk_cmd.run_cli('security org service-accounts keypair private-key.pem public-key.pem')
 
     log.info('Create service account')
-    out, err, rc = shakedown.run_dcos_command(
-        'security org service-accounts delete "{account}"'.format(account=service_account_name))
-    out, err, rc = shakedown.run_dcos_command(
+    sdk_cmd.run_cli(
         'security org service-accounts create -p public-key.pem -d "My service account" "{account}"'.format(
             account=service_account_name))
-    assert not rc, 'Failed to create service account "{account}": {err}'.format(
-            account=service_account_name, err=err)
 
     log.info('Create secret')
-    out, err, rc = shakedown.run_dcos_command('security secrets delete "{secret}"'.format(secret=secret_name))
-    out, err, rc = shakedown.run_dcos_command(
+    sdk_cmd.run_cli(
         'security secrets create-sa-secret --strict private-key.pem "{account}" "{secret}"'.format(
-            account=service_account_name, secret=secret_name))
-    assert not rc, 'Failed to create secret "{secret}" for service account "{account}": {err}'.format(
-            account=service_account_name,
-            secret=secret_name,
-            err=err)
+            account=service_account_name, secret=service_account_secret))
 
     log.info('Service account created for account={account} secret={secret}'.format(
         account=service_account_name,
-        secret=secret_name))
+        secret=service_account_secret))
 
 
-def delete_service_account(service_account_name: str, secret_name: str) -> None:
+def delete_service_account(service_account_name: str, service_account_secret: str) -> None:
     """
     Deletes service account and secret with private key that belongs to the
     service account.
     """
-    out, err, rc = shakedown.run_dcos_command(
-        "security org service-accounts delete {name}".format(name=service_account_name))
-    out, err, rc = shakedown.run_dcos_command(
-        "security secrets delete {secret_name}".format(secret_name=secret_name))
+    # ignore any failures:
+    shakedown.run_dcos_command("security org service-accounts delete {name}".format(name=service_account_name))
+    shakedown.run_dcos_command("security secrets delete {secret}".format(secret=service_account_secret))
 
     # Files generated by service-accounts keypair command should get removed
-    keypair_files = ['private-key.pem', 'public-key.pem']
-    for keypair_file in keypair_files:
+    for keypair_file in ['private-key.pem', 'public-key.pem']:
         try:
             os.unlink(keypair_file)
         except OSError:
@@ -193,7 +188,7 @@ def delete_service_account(service_account_name: str, secret_name: str) -> None:
 
 def setup_security(framework_name: str) -> None:
     log.info('Setting up strict-mode security')
-    create_service_account(service_account_name='service-acct', secret_name='secret')
+    create_service_account(service_account_name='service-acct', service_account_secret='secret')
     grant_permissions(
         linux_user='nobody',
         role_name='{}-role'.format(framework_name),
@@ -229,7 +224,7 @@ def cleanup_security(framework_name: str) -> None:
         role_name='{}-role'.format(framework_name),
         service_account_name='service-acct'
     )
-    delete_service_account(service_account_name='service-acct', secret_name='secret')
+    delete_service_account(service_account_name='service-acct', service_account_secret='secret')
     # log.info('Finished cleaning up strict-mode security')
 
 

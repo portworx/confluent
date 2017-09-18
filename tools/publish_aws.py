@@ -40,6 +40,9 @@ class AWSPublisher(object):
         self._input_dir_path = input_dir_path
 
         self._aws_region = os.environ.get('AWS_UPLOAD_REGION', '')
+        self._universe_url_prefix = os.environ.get(
+            'UNIVERSE_URL_PREFIX',
+            'https://universe-converter.mesosphere.com/transform?url=')
         s3_bucket = os.environ.get('S3_BUCKET', 'infinity-artifacts')
         s3_dir_path = os.environ.get('S3_DIR_PATH', 'autodelete7d')
         dir_name = '{}-{}'.format(
@@ -90,14 +93,16 @@ class AWSPublisher(object):
             self._artifact_paths.append(artifact_path)
 
 
-    def _upload_artifact(self, filepath):
+    def _upload_artifact(self, filepath, content_type=None):
         filename = os.path.basename(filepath)
+        cmdlist = ['aws s3']
         if self._aws_region:
-            cmd = 'aws s3 --region={} cp --acl public-read {} {}/{} 1>&2'.format(
-                self._aws_region, filepath, self._s3_directory, filename)
-        else:
-            cmd = 'aws s3 cp --acl public-read {} {}/{} 1>&2'.format(
-                filepath, self._s3_directory, filename)
+            cmdlist.append('--region={}'.format(self._aws_region))
+        cmdlist.append('cp --acl public-read')
+        if content_type:
+            cmdlist.append('--content-type "{}"'.format(content_type))
+        cmdlist.append('{} {}/{} 1>&2'.format(filepath, self._s3_directory, filename))
+        cmd = ' '.join(cmdlist)
         if self._dry_run:
             logger.info('[DRY RUN] {}'.format(cmd))
             ret = 0
@@ -128,10 +133,10 @@ class AWSPublisher(object):
             universe_url_file.flush()
             universe_url_file.close()
         num_artifacts = len(self._artifact_paths)
-        if num_artifacts > 1:
-            suffix = 's'
-        else:
+        if num_artifacts == 1:
             suffix = ''
+        else:
+            suffix = 's'
         self._github_updater.update(
             'success',
             'Uploaded stub universe and {} artifact{}'.format(num_artifacts, suffix),
@@ -140,17 +145,22 @@ class AWSPublisher(object):
 
     def upload(self):
         '''generates a unique directory, then uploads artifacts and a new stub universe to that directory'''
+        builder = universe_builder.UniversePackageBuilder(
+            self._pkg_name, self._pkg_version,
+            self._input_dir_path, self._http_directory, self._artifact_paths)
         try:
-            universe_path = universe_builder.UniversePackageBuilder(
-                self._pkg_name, self._pkg_version,
-                self._input_dir_path, self._http_directory, self._artifact_paths).build_zip()
+            universe_path = builder.build_package()
         except Exception as e:
             err = 'Failed to create stub universe: {}'.format(str(e))
             self._github_updater.update('error', err)
             raise
 
-        # print universe url early
-        universe_url = self._upload_artifact(universe_path)
+        # upload universe package definition first and get its URL
+        universe_url = self._universe_url_prefix + self._upload_artifact(
+            universe_path,
+            content_type='application/vnd.dcos.universe.repo+json;charset=utf-8')
+        logger.info('---')
+        logger.info('STUB UNIVERSE: {}'.format(universe_url))
         logger.info('---')
         logger.info('Uploading {} artifacts:'.format(len(self._artifact_paths)))
 
@@ -165,8 +175,10 @@ class AWSPublisher(object):
         logger.info('---')
         logger.info('(Re)install your package using the following commands:')
         logger.info('dcos package uninstall {}'.format(self._pkg_name))
+        logger.info('\n- - - -\nFor 1.9 or older clusters only')
         logger.info('dcos node ssh --master-proxy --leader ' +
                     '"docker run mesosphere/janitor /janitor.py -r {0}-role -p {0}-principal -z dcos-service-{0}"'.format(self._pkg_name))
+        logger.info('- - - -\n')
         logger.info('dcos package repo remove {}-aws'.format(self._pkg_name))
         logger.info('dcos package repo add --index=0 {}-aws {}'.format(self._pkg_name, universe_url))
         logger.info('dcos package install --yes {}'.format(self._pkg_name))
@@ -175,9 +187,9 @@ class AWSPublisher(object):
 
 
 def print_help(argv):
-    logger.info('Syntax: {} <package-name> <confluent-kafka-package-dir> [artifact files ...]'.format(argv[0]))
+    logger.info('Syntax: {} <package-name> <template-package-dir> [artifact files ...]'.format(argv[0]))
     logger.info('  Example: $ {} kafka /path/to/universe/jsons/ /path/to/artifact1.zip /path/to/artifact2.zip /path/to/artifact3.zip'.format(argv[0]))
-    logger.info('In addition, environment variables named \'CONFLUENT-KAFKA_SOME_PARAMETER\' will be inserted against the provided package confluent-kafka (with params of the form \'{{some-parameter}}\')')
+    logger.info('In addition, environment variables named \'TEMPLATE_SOME_PARAMETER\' will be inserted against the provided package template (with params of the form \'{{some-parameter}}\')')
 
 
 def main(argv):
@@ -186,15 +198,16 @@ def main(argv):
         return 1
     # the package name:
     package_name = argv[1]
-    # local path where the package confluent-kafka is located:
+    # local path where the package template is located:
     package_dir_path = argv[2].rstrip('/')
     # artifact paths (to upload along with stub universe)
     artifact_paths = argv[3:]
     logger.info('''###
 Package:         {}
 Template path:   {}
-Artifacts:       {}
-###'''.format(package_name, package_dir_path, ','.join(artifact_paths)))
+Artifacts:
+{}
+###'''.format(package_name, package_dir_path, '\n'.join(['- {}'.format(path) for path in artifact_paths])))
 
     AWSPublisher(package_name, package_dir_path, artifact_paths).upload()
     return 0

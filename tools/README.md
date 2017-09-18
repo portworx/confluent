@@ -6,21 +6,16 @@ Common tools which automate the process of uploading, testing, and releasing DC/
 
 Build/release tools:
 
-- **[publish_aws.py](#publish_awspy)**: Given a universe confluent-kafka and a set of build artifacts to be uploaded, creates a 'stub universe' package and uploads it along with the provided artifacts to a dev S3 bucket (ideally a directory with expiration configured to 7d or so).
-- **[publish_http.py](#publish_httppy)**: Given a universe confluent-kafka and a set of build artifacts to be uploaded, creates a 'stub universe' package and hosts it from a local HTTP server along with any provided artifacts.
+- **[publish_aws.py](#publish_awspy)**: Given a universe template and a set of build artifacts to be uploaded, creates a 'stub universe' package and uploads it along with the provided artifacts to a dev S3 bucket (ideally a directory with expiration configured to 7d or so).
+- **[publish_http.py](#publish_httppy)**: Given a universe template and a set of build artifacts to be uploaded, creates a 'stub universe' package and hosts it from a local HTTP server along with any provided artifacts.
 - **[release_builder.py](#release_builderpy)**: Given an uploaded stub universe URL and a version string, transfers the artifacts to a more permanent 'release' S3 bucket and creates a PR against [Universe](https://github.com/mesosphere/universe/).
-
-Test tools:
-
-- **[launch_ccm_cluster.py](#launch_ccm_clusterpy)**: Launches a DC/OS cluster using the Mesosphere-internal 'CCM' utility. (This is due to be removed or replaced soon.)
-- **[run_tests.py](#run_testspy)**: Given a running DC/OS cluster, downloads and sets up a sandboxed CLI for that cluster and runs integration tests.
 
 Misc utilities:
 
-- **[dcos_login.py](#dcos_loginpy)**: Log into a DC/OS cluster using default/test credentials. Autodetects DC/OS Open vs DC/OS Enterprise.
+- **[dcos_login.py](#dcos_loginpy)**: Log into a DC/OS cluster using default/test credentials.
 - **[print_package_tag.py](#print_package_tagpy)**: Return the Git repo SHA for the provided package on the cluster.
 - **[github_update.py](#github_updatepy)**: Update a GitHub PR status with the progress of a build. Used by the above scripts, and may be used in your own build scripts to provide a nicer CI experience in PRs.
-- **[universe_builder.py](#universe_builderpy)**: Underlying script which builds a `stub-universe.zip` given the necessary confluent-kafka data (package name, version, upload dir, ...). This is called by `publish_aws.py` and `publish_http.py` after autogenerating an upload directory.
+- **[universe_builder.py](#universe_builderpy)**: Underlying script which builds a `stub-universe.zip` given the necessary template data (package name, version, upload dir, ...). This is called by `publish_aws.py` and `publish_http.py` after autogenerating an upload directory.
 
 These utilities are designed to be used both in automated CI flows, as well as locally on developer workstations.
 
@@ -28,13 +23,13 @@ These utilities are designed to be used both in automated CI flows, as well as l
 
 In order to use these tools to package your service, there are a few ingredients to be added to your service repository:
 
-- [Package confluent-kafka with placeholders](#package-confluent-kafka-with-placeholders)
+- [Package template with placeholders](#package-template-with-placeholders)
 - [Build script and artifacts](#build-script-and-artifacts)
 - [Release script](#release-script)
 
-### Package confluent-kafka with placeholders
+### Package template with placeholders
 
-The package confluent-kafka is the only particularly formal requirement, while the rest is fairly ad-hoc.
+The package template is the only particularly formal requirement, while the rest is fairly ad-hoc.
 
 There should be a directory in the project repository containing the `.json` files that you want to be put in the Universe. The directory would look something like this:
 
@@ -49,7 +44,7 @@ project-repo/universe/
 
 It's recommended that you include this directory within the project repository alongside the service code, so that you are able to easily make any packaging changes in concert with code changes in the same commit. For example, adding a new user-facing configuration setting to the packaging while also adding the code which supports that setting.
 
-Once you have populated the package confluent-kafka directory, you should update it to include the following placeholders:
+Once you have populated the package template directory, you should update it to include the following placeholders:
 - Artifact url placeholders
 - Version label placeholder
 - Binary CLI module SHA placeholders
@@ -83,7 +78,7 @@ For some examples of this, take a look at `package.json` for [Kafka](https://git
 
 #### Binary CLI module SHA placeholders
 
-If you are providing binary CLI modules with your service, the tooling supports automatically populating the package confluent-kafka with any required `sha256sum` values.
+If you are providing binary CLI modules with your service, the tooling supports automatically populating the package template with any required `sha256sum` values.
 
 The expected placeholder format is `{{sha256:yourfile.ext}}`, where `yourfile.ext` is one of the files which was passed to `publish_aws.py` or `publish_http.py`. Multiple files of the same name are not supported, as they all get uploaded to the same directory anyway. For example:
 
@@ -109,9 +104,9 @@ For some examples of this, take a look at `resource.json` for [Kafka](https://gi
 
 #### Custom placeholders
 
-You may include custom placeholders of the form `{{custom-placeholder}}` anywhere in your confluent-kafka. This can be useful for e.g. passing the path to a per-build docker tag, a randomly generated key, or anything else that you expect to change on a per-build basis.
+You may include custom placeholders of the form `{{custom-placeholder}}` anywhere in your template. This can be useful for e.g. passing the path to a per-build docker tag, a randomly generated key, or anything else that you expect to change on a per-build basis.
 
-These parameters can then be filled in by passing a `CONFLUENT_KAFKA_CUSTOM_PLACEHOLDER` environment variable with the desired value when calling `publish_aws.py` or `publish_http.py`. You can learn more about this feature in the documentation for `publish_aws.py` and `publish_http.py`, below.
+These parameters can then be filled in by passing a `TEMPLATE_CUSTOM_PLACEHOLDER` environment variable with the desired value when calling `publish_aws.py` or `publish_http.py`. You can learn more about this feature in the documentation for `publish_aws.py` and `publish_http.py`, below.
 
 ### Build script and artifacts
 
@@ -156,7 +151,7 @@ Note that this uses the `aws` CLI to perform the upload. You must have `aws` ins
 #### Usage
 
 ```
-$ ./publish_aws.py <package-name> <confluent-kafka-package-dir> [artifact files ...]
+$ ./publish_aws.py <package-name> <template-package-dir> [artifact files ...]
 ```
 
 Example:
@@ -200,7 +195,7 @@ Optional:
 - `AWS_UPLOAD_REGION`: manual region to use for the S3 upload
 - `WORKSPACE`: Set by Jenkins, used to determine if a `$WORKSPACE/stub-universe.properties` file should be created with `STUB_UNIVERSE_URL` and `STUB_UNIVERSE_S3_DIR` values.
 - `CUSTOM_UNIVERSES_PATH`: Text file to write the stub universe URL into
-- `CONFLUENT_KAFKA_<SOME_PARAM>`: Inherited by `universe_builder.py`, see below.
+- `TEMPLATE_<SOME_PARAM>`: Inherited by `universe_builder.py`, see below.
 - `DRY_RUN`: Refrain from actually uploading anything to S3.
 
 ### publish_http.py
@@ -212,7 +207,7 @@ The resulting uploaded stub universe URL is logged to stdout (while all other lo
 #### Usage
 
 ```
-$ ./publish_http.py <package-name> <confluent-kafka-package-dir> [artifact files ...]
+$ ./publish_http.py <package-name> <template-package-dir> [artifact files ...]
 ```
 
 Example:
@@ -254,7 +249,7 @@ Optional:
 - `HTTP_HOST` (default: `172.17.0.1`, the IP used in dcos-docker): Host endpoint to be used by HTTP daemon.
 - `HTTP_PORT` (default: `0` for an ephemeral port): Port to be used by HTTP daemon.
 - `WORKSPACE`: Set by Jenkins, used to determine if a `$WORKSPACE/stub-universe.properties` file should be created with `STUB_UNIVERSE_URL` and `STUB_UNIVERSE_S3_DIR` values.
-- `CONFLUENT_KAFKA_<SOME_PARAM>`: Inherited by `universe_builder.py`, see below.
+- `TEMPLATE_<SOME_PARAM>`: Inherited by `universe_builder.py`, see below.
 
 ### release_builder.py
 
@@ -314,94 +309,6 @@ The following are optional:
 - `HTTP_RELEASE_SERVER` (default: `https://downloads.mesosphere.com`): The HTTP base URL for paths within the above bucket.
 - `RELEASE_DIR_PATH` (default: `<package-name>/assets`): The path prefix within `S3_RELEASE_BUCKET` and `HTTP_RELEASE_SERVER` to place the release artifacts. Artifacts will be stored in a `<package-version>` subdirectory within this path.
 - `DRY_RUN`: Refrain from actually transferring/uploading anything in S3, and from actually creating a GitHub PR.
-
-## Test Tools
-
-### launch_ccm_cluster.py
-
-Launches a DC/OS cluster using the Mesosphere-internal 'CCM' tool, then prints the information about the launched cluster to stdout (all other logging is to stderr). This is not usable by the general public and will be going away or getting replaced soon.
-
-#### Usage
-
-```
-$ ./launch_ccm_cluster.py
-```
-
-Starts cluster with the env-provided configuration (see env vars). On success, returns zero and prints a json-formatted dictionary containing the cluster ID and URL.  All other log output is always sent to stderr, to ensure that stdout is not polluted by logs. In addition to this, if the script detects that it's running in a Jenkins environment, it will also write the cluster ID and URL to a `$WORKSPACE/cluster-$CCM_GITHUB_LABEL.properties` file. On failure, returns non-zero.
-
-```
-$ ./launch_ccm_cluster.py stop <ccm_id>
-```
-
-Stops cluster with provided id, with up to `CCM_ATTEMPTS` attempts and `CCM_TIMEOUT_MINS` time waited per attempt. Returns 0 on success or non-zero otherwise.
-
-```
-$ ./launch_ccm_cluster.py trigger-stop <ccm_id>
-```
-
-Stops cluster with provided id, then immediately returns rather than waiting for the cluster to turn down.
-
-```
-$ ./launch_ccm_cluster.py wait <ccm_id> <current_state> <new_state>
-```
-
-Waits for the cluster to switch from some current state to some new state (eg `PENDING` => `RUNNING`), with up to `CCM_TIMEOUT_MINS` time waited. Returns 0 on success or non-zero otherwise.
-
-#### Environment variables
-
-Common options:
-
-- `CCM_AUTH_TOKEN` (REQUIRED): Auth token to use when querying CCM.
-- `CCM_GITHUB_LABEL`: Label to use in Github CI, which is prefixed by `cluster:` (default `ccm`, for `cluster:ccm`)
-- `CCM_ATTEMPTS`: Number of attempts to complete a start/stop operation (e.g. number of times to attempt cluster creation before giving up) (default `2`)
-- `CCM_TIMEOUT_MINS`: Number of minutes to wait for a start/stop operation to complete before treating it as a failure (default `45`)
-- `DRY_RUN`: Refrain from actually sending requests to the cluster (only partially works, as no fake response is generated) (default `''`)
-- `CCM_MOUNT_VOLUMES`: Enable mount volumes in the launched cluster (non-empty value = `true`).
-
-Startup-specific options:
-
-- `CCM_DURATION_MINS`: Number of minutes that the cluster should run (default: `60`)
-- `CCM_CHANNEL`: Development channel to use (default: `testing/master`)
-- `CCM_CONFLUENT_KAFKA`: AWS Cloudformation confluent-kafka to use in the above channel (default `ee.single-master.cloudformation.json`)
-- `CCM_PUBLIC_AGENTS`: Number of public agents to start (default: `0`)
-- `CCM_AGENTS`: Number of private agents to start (default: `1`)
-- `CCM_AWS_REGION`: Region to start an AWS cluster in (default `us-west-2`)
-- `CCM_ADMIN_LOCATION`: IP filter range for accessing the dashboard (default `0.0.0.0/0`)
-- `CCM_CLOUD_PROVIDER`: Cloud provider type value to use (default `0`)
-- `WORKSPACE`: Set by Jenkins, used to determine if a `$WORKSPACE/cluster-$CCM_GITHUB_LABEL.properties` file should be created with `CLUSTER_ID` and `CLUSTER_URL` values.
-
-### run_tests.py
-
-Runs [Shakedown](#https://github.com/dcos/shakedown/) or dcos-tests integration tests against a pre-existing cluster. Handles retrieving the latest DC/OS CLI binary and placing it into a directory sandbox, and setting it up for immediate use by the tests.
-
-Returns zero on success, or non-zero otherwise.
-
-#### Usage
-
-Shakedown tests:
-
-```
-$ TEST_TYPES="sanity or recovery" \
-CLUSTER_URL=http://your-dcos-cluster.com \
-  ./run_tests.py shakedown /path/to/your/tests/ /path/to/your/tests/requirements.txt
-```
-
-dcos-tests (Mesosphere-internal, deprecated in favor of Shakedown):
-
-```
-$ TEST_TYPES="recovery" \
-CLUSTER_URL=http://your-dcos-cluster.com \
-  ./run_tests.py dcos-tests /path/to/dcos-tests/test/path /path/to/root/dcos-tests/
-```
-
-#### Environment variables
-
-- `CLUSTER_URL` (REQUIRED): The URL of a DC/OS cluster to be tested against
-- `TEST_TYPES` (default `sanity`): The test types to run (passed to `py.test -m`)
-- `STUB_UNIVERSE_URL`: URL of a stub universe package to be added to the cluster's repository list, if any.
-- `TEST_GITHUB_LABEL` (default `shakedown`/`dcos-tests` as relevant): Custom label to use when reporting status to Github. This value will be prepended with `test:`.
-
-This utility calls `dcos_login.py` and `github_update.py`, so the environment variables used by those tools are inherited. For example, the `CLUSTER_AUTH_TOKEN` environment variable may be assigned to authenticate against a DC/OS Open cluster which had already been logged into (at which point the default token used by `dcos_login.py` is no longer valid).
 
 ## Misc Utilities
 
@@ -502,14 +409,14 @@ Meanwhile `GITHUB_COMMIT_STATUS_URL` is useful for providing custom links in sta
 
 Builds a self-contained Universe 2.x-format package ('stub-universe') which may be used to add/test a given build directly on a DC/OS cluster. The resulting zip file's path is printed to stdout, while all other logging goes to stderr.
 
-The provided universe files may contain confluent-kafka parameters of the form `{{some-param}}`. The following parameters are filled by default:
+The provided universe files may contain template parameters of the form `{{some-param}}`. The following parameters are filled by default:
 - `{{package-version}}`: The version string to use for this package. Filled with the provided `package-version` argument
 - `{{artifact-dir}}`: Where the artifacts are being uploaded to. Filled with the provided `artifact-dir` argument
 - `{{sha256:somefile.txt}}`: Automatically populated with the sha256sum value of `somefile.txt`. The paths to these files must be provided as arguments when invoking the builder.
 
-In addition to these default confluent-kafka parameters, the caller may also provide environment variables of the form `CONFLUENT_KAFKA_SOME_PARAM` whose value will automatically be inserted into confluent-kafka fields named `{{some-param}}`. For example, running `CONFLUENT_KAFKA_DOCKER_IMAGE=mesosphere/docker-image ./universe_builder.py` would result in any `{{docker-image}}` parameters being replaced with `mesosphere/docker-image`.
+In addition to these default template parameters, the caller may also provide environment variables of the form `TEMPLATE_SOME_PARAM` whose value will automatically be inserted into template fields named `{{some-param}}`. For example, running `TEMPLATE_DOCKER_IMAGE=mesosphere/docker-image ./universe_builder.py` would result in any `{{docker-image}}` parameters being replaced with `mesosphere/docker-image`.
 
-A universe confluent-kafka is effectively a directory with the JSON files that you want to include in your Universe package, with confluent-kafka paramters provided in the above format. For some real-world examples of universe confluent-kafkas, take a look at [Kafka's](https://github.com/mesosphere/dcos-kafka-service/tree/master/universe/) or [Cassandra's](https://github.com/mesosphere/dcos-cassandra-service/tree/master/universe/) confluent-kafkas.
+A universe template is effectively a directory with the JSON files that you want to include in your Universe package, with template paramters provided in the above format. For some real-world examples of universe templates, take a look at [Kafka's](https://github.com/mesosphere/dcos-kafka-service/tree/master/universe/) or [Cassandra's](https://github.com/mesosphere/dcos-cassandra-service/tree/master/universe/) templates.
 
 #### Usage
 
@@ -517,7 +424,7 @@ A universe confluent-kafka is effectively a directory with the JSON files that y
 $ ./universe_builder.py \
     <package-name> \
     <package-version> \
-    <confluent-kafka-package-dir> \
+    <template-package-dir> \
     <artifact-dir> \
     [artifact files ...]
 ```
@@ -525,7 +432,7 @@ $ ./universe_builder.py \
 Example:
 
 ```
-$ CONFLUENT_KAFKA_SOME_CUSTOM_STRING="this text replaces any instances of {{some-custom-string}}" \
+$ TEMPLATE_SOME_CUSTOM_STRING="this text replaces any instances of {{some-custom-string}}" \
 ./universe_builder.py \
     kafka \
     1.2.3-4.5.6 \
@@ -538,7 +445,7 @@ $ CONFLUENT_KAFKA_SOME_CUSTOM_STRING="this text replaces any instances of {{some
 
 #### Environment variables
 
-As described above, any `CONFLUENT_KAFKA_<SOME_PARAM>` values will automatically be inserted into confluent-kafka slots named `{{some-param}}`. No other environment variables are needed.
+As described above, any `TEMPLATE_<SOME_PARAM>` values will automatically be inserted into template slots named `{{some-param}}`. No other environment variables are needed.
 
 #### Enable Mount Volumes Script
 ```bash
