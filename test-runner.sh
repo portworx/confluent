@@ -47,9 +47,6 @@ if [ -n "$PYTEST_M" ]; then
 fi
 
 if [ -n "$PYTEST_ARGS" ]; then
-    # TeamCity strips double quotes from commands, meaning that we need to use
-    # single quotes. Remove leading and trailing single quotes:
-    PYTEST_ARGS=${${PYTEST_ARGS%\'}#\'}
     pytest_args+=("$PYTEST_ARGS")
 fi
 
@@ -107,7 +104,7 @@ for framework in $FRAMEWORK_LIST; do
     fi
 
     echo "Starting test for $framework at "`date`
-    py.test -vv -s "${pytest_args[@]}" ${FRAMEWORK_DIR}/tests
+    py.test -vv -s ${pytest_args[@]} ${FRAMEWORK_DIR}/tests
     exit_code=$?
     echo "Finished test for $framework at "`date`
 
