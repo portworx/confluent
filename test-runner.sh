@@ -36,6 +36,34 @@ fi
 
 echo "Beginning integration tests at "`date`
 
+# Strip the quotes from the -k and -m options to pytest
+PYTEST_K_FROM_PYTEST_ARGS=`echo "$PYTEST_ARGS" \
+    | sed -e "s#.*-k [\'\"]\([^\'\"]*\)['\"].*#\1#"`
+if [ "$PYTEST_K_FROM_PYTEST_ARGS" == "$PYTEST_ARGS" ]; then
+    PYTEST_K_FROM_PYTEST_ARGS=
+else
+    if [ -n "$PYTEST_K" ]; then
+        PYTEST_K="$PYTEST_K "
+    fi
+    PYTEST_K="${PYTEST_K}${PYTEST_K_FROM_PYTEST_ARGS}"
+    PYTEST_ARGS=`echo "$PYTEST_ARGS" \
+        | sed -e "s#-k [\'\"]\([^\'\"]*\)['\"]##"`
+fi
+
+PYTEST_M_FROM_PYTEST_ARGS=`echo "$PYTEST_ARGS" \
+    | sed -e "s#.*-m [\'\"]\([^\'\"]*\)['\"].*#\1#"`
+if [ "$PYTEST_M_FROM_PYTEST_ARGS" == "$PYTEST_ARGS" ]; then
+    PYTEST_M_FROM_PYTEST_ARGS=
+else
+    if [ -n "$PYTEST_M" ]; then
+        PYTEST_M="$PYTEST_M "
+    fi
+    PYTEST_M="${PYTEST_M}${PYTEST_M_FROM_PYTEST_ARGS}"
+    PYTEST_ARGS=`echo "$PYTEST_ARGS" \
+        | sed -e "s#-m [\'\"]\([^\'\"]*\)['\"]##"`
+fi
+
+
 pytest_args=()
 
 if [ -n "$PYTEST_K" ]; then
@@ -47,8 +75,9 @@ if [ -n "$PYTEST_M" ]; then
 fi
 
 if [ -n "$PYTEST_ARGS" ]; then
-    pytest_args+=("$PYTEST_ARGS")
+    pytest_args+=($PYTEST_ARGS)
 fi
+
 
 if [ -f /ssh/key ]; then
     eval "$(ssh-agent -s)"
