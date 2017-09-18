@@ -47,6 +47,9 @@ if [ -n "$PYTEST_M" ]; then
 fi
 
 if [ -n "$PYTEST_ARGS" ]; then
+    # TeamCity strips double quotes from commands, meaning that we need to use
+    # single quotes. Remove leading and trailing single quotes:
+    PYTEST_ARGS=${${PYTEST_ARGS%\'}#\'}
     pytest_args+=("$PYTEST_ARGS")
 fi
 
