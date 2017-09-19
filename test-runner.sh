@@ -20,12 +20,8 @@ export SECURITY
 REPO_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ "$FRAMEWORK" = "all" ]; then
-    if [ ! -n "$STUB_UNIVERSE_URL" ]; then
+    if [ -n "$STUB_UNIVERSE_URL" ]; then
         echo "Cannot set \$STUB_UNIVERSE_URL when building all frameworks"
-        exit 1
-    fi
-    if [ ! -n $FRAMEWORK_DIR ]; then
-        echo "Cannot set \$FRAMEWORK_DIR when building all framworks"
         exit 1
     fi
     # randomize the FRAMEWORK_LIST
@@ -66,6 +62,8 @@ fi
 
 pytest_args=()
 
+# PYTEST_K and PYTEST_M are treated as single strings, and should thus be added
+# to the pytest_args array in quotes.
 if [ -n "$PYTEST_K" ]; then
     pytest_args+=(-k "$PYTEST_K")
 fi
@@ -74,10 +72,10 @@ if [ -n "$PYTEST_M" ]; then
     pytest_args+=(-m "$PYTEST_M")
 fi
 
+# Each of the space-separated parts of PYTEST_ARGS are treated separately.
 if [ -n "$PYTEST_ARGS" ]; then
     pytest_args+=($PYTEST_ARGS)
 fi
-
 
 if [ -f /ssh/key ]; then
     eval "$(ssh-agent -s)"
@@ -127,18 +125,21 @@ for framework in $FRAMEWORK_LIST; do
     echo "\tDCOS_ENTERPRISE=$DCOS_ENTERPRISE"
     /build/tools/dcos_login.py
 
-    if [ `cat cluster_info.json | jq .key_helper` == 'true' ]; then
-        cat cluster_info.json | jq -r .ssh_private_key > /root/.ssh/id_rsa
-        chmod 600 /root/.ssh/id_rsa
+    if [ -f cluster_info.json ]; then
+        if [ `cat cluster_info.json | jq .key_helper` == 'true' ]; then
+            cat cluster_info.json | jq -r .ssh_private_key > /root/.ssh/id_rsa
+            chmod 600 /root/.ssh/id_rsa
+        fi
     fi
 
     echo "Starting test for $framework at "`date`
-    py.test -vv -s ${pytest_args[@]} ${FRAMEWORK_DIR}/tests
+    py.test -vv -s "${pytest_args[@]}" ${FRAMEWORK_DIR}/tests
     exit_code=$?
     echo "Finished test for $framework at "`date`
 
     set +e
-    if [ -n ${CLUSTER_WAS_CREATED:-} ]; then
+    if [ -n "$CLUSTER_WAS_CREATED" ]; then
+        echo "Deleting cluster $CLUSTER_URL"
         dcos-launch delete
         unset CLUSTER_URL
     fi
